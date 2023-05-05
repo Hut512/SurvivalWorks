@@ -9,7 +9,6 @@ import de.survivalworkers.core.engine.graphics.shaders.ShaderProgram;
 import de.survivalworkers.core.engine.graphics.vertex.Model;
 import de.survivalworkers.core.engine.graphics.vertex.Texture;
 import de.survivalworkers.core.engine.graphics.vertex.VertexBufferStruct;
-import de.survivalworkers.engine.core.engine.graphics.rendering.*;
 import de.survivalworkers.core.vk.device.LogicalDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.system.MemoryStack;
