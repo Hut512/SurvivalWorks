@@ -66,3 +66,21 @@ java {
 application {
     mainClass = 'de.survivalworks.core.SurvivalWorks'
 }
+
+tasks.register('compileShaders') {
+    inputs.dir "src/main/shader"
+    outputs.dir "src/main/resources/shader"
+    doLast {
+        fileTree("src/main/shader").each { shaderFile ->
+            def spvFile = file("${projectDir}/src/main/resources/shader/${shaderFile.name}.spv")
+            if (!spvFile.exists() || shaderFile.lastModified() > spvFile.lastModified()) {
+                exec {
+                    workingDir file("${projectDir}/src/main/shader")
+                    commandLine "glslc", "${shaderFile}", "-o", "${spvFile}"
+                }
+            }
+        }
+    }
+}
+
+processResources.dependsOn compileShaders
