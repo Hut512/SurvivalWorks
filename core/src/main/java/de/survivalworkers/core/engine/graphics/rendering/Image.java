@@ -3,6 +3,7 @@ package de.survivalworkers.core.engine.graphics.rendering;
 import de.survivalworkers.core.engine.graphics.Util;
 import de.survivalworkers.core.vk.util.VkUtil;
 import de.survivalworkers.core.vk.device.LogicalDevice;
+import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
@@ -11,7 +12,7 @@ import org.lwjgl.vulkan.VkMemoryRequirements;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
-
+@Slf4j
 public class Image {
     private final LogicalDevice device;
     private final int format;
@@ -19,16 +20,19 @@ public class Image {
     private final long image;
     private final long memory;
 
+
     public Image(LogicalDevice device, ImageData data){
         this.device = device;
         try(MemoryStack stack = MemoryStack.stackPush()) {
             this.format = data.format;
             this.mipLvl = data.mipLvl;
 
-            VkImageCreateInfo createInfo = VkImageCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO).imageType(VK_IMAGE_TYPE_2D).format(format).extent(it -> it.width(data.width).height(data.height).depth(1)).
-                    mipLevels(mipLvl).arrayLayers(data.arrayLayers).samples(data.sampleCount).initialLayout(VK_IMAGE_LAYOUT_UNDEFINED).sharingMode(VK_SHARING_MODE_EXCLUSIVE).tiling(VK_IMAGE_TILING_OPTIMAL).usage(data.usage);
+            VkImageCreateInfo createInfo = VkImageCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO).imageType(VK_IMAGE_TYPE_2D).format(format).extent(it -> it.width(data.width).height(data.height).
+                            depth(1)).mipLevels(mipLvl).arrayLayers(data.arrayLayers).samples(data.sampleCount).initialLayout(VK_IMAGE_LAYOUT_UNDEFINED).sharingMode(VK_SHARING_MODE_EXCLUSIVE).
+                    tiling(VK_IMAGE_TILING_OPTIMAL).usage(data.usage);
 
             LongBuffer lp = stack.mallocLong(1);
+            log.debug(data.width + ":" + data.height);
             VkUtil.check(vkCreateImage(device.getHandle(),createInfo,null,lp),"Could not create Image");
             image = lp.get(0);
 

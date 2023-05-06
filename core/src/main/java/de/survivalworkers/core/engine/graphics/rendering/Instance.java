@@ -85,7 +85,7 @@ public class Instance implements Closeable {
                     .apiVersion(VK_API_VERSION_1_0);
 
             PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
-            if ( glfwExtensions != null : "Failed to get GLFW instance extensions";
+            if ( glfwExtensions == null)throw new RuntimeException("Failed to get GLFW instance extensions");
 
             PointerBuffer requiredExtensions;
 

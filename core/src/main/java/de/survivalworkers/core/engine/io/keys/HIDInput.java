@@ -134,7 +134,7 @@ public class HIDInput {
                         try {
                             method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
                         } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
+                            throw new RuntimeException(e);
                         }
                     });
                 }else {
@@ -143,7 +143,7 @@ public class HIDInput {
                         try {
                             method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
                         } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
+                            throw new RuntimeException(e);
                         }
                     });
                 }

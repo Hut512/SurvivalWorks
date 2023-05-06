@@ -24,8 +24,8 @@ import static org.lwjgl.vulkan.VK10.*;
 
 @Slf4j
 public class ForwardRenderActivity {
-    public static final String VERTEX_SHADER = "src/main/resources/shaders/vertex.glsl";
-    public static final String FRAGMENT_SHADER = "src/main/resources/shaders/fragment.glsl";
+    public static final String VERTEX_SHADER = "core/src/main/resources/shader/vertex.vert";
+    public static final String FRAGMENT_SHADER = "core/src/main/resources/shader/fragment.frag";
 
     private final LogicalDevice device;
     private final CommandBuffer[] commandBuffers;
@@ -113,9 +113,11 @@ public class ForwardRenderActivity {
     private void createDepthImages() {
         int numImages = swapChain.getNumImages();
         VkExtent2D swapChainExtent = swapChain.getCreateInfo().imageExtent();
+        final int width = swapChainExtent.width();
+        final int height = swapChainExtent.height();
         depthAttachments = new Attachment[numImages];
         for (int i = 0; i < numImages; i++) {
-            depthAttachments[i] = new Attachment(device, swapChainExtent.width(), swapChainExtent.height(),
+            depthAttachments[i] = new Attachment(device,width ,height ,
                     VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
         }
     }
