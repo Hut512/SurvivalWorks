@@ -1,6 +1,6 @@
-package de.survivalworkers.core.engine.io.keys;
+package de.survivalworkers.core.client.engine.io.keys;
 
-import de.survivalworkers.core.engine.io.Configuration;
+import de.survivalworkers.core.client.engine.io.Configuration;
 import lombok.SneakyThrows;
 
 import java.io.*;

@@ -1,4 +1,4 @@
-package de.survivalworkers.core.engine.io.keys;
+package de.survivalworkers.core.client.engine.io.keys;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

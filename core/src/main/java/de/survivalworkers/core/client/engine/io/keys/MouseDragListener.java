@@ -1,4 +1,4 @@
-package de.survivalworkers.core.engine.io.keys;
+package de.survivalworkers.core.client.engine.io.keys;
 
 /**
  * this interface is for every Class that wants to use {@link DragHandler} to handle mouse Dragging

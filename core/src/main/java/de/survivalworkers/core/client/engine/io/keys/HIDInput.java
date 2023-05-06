@@ -1,4 +1,4 @@
-package de.survivalworkers.core.engine.io.keys;
+package de.survivalworkers.core.client.engine.io.keys;
 
 import lombok.Getter;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
