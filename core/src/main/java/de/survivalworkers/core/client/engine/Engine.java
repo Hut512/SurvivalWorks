@@ -1,9 +1,9 @@
 package de.survivalworkers.core.client.engine;
 
 import de.survivalworkers.core.client.SWWindow;
-import de.survivalworkers.core.client.vk.Renderer;
-import de.survivalworkers.core.client.engine.graphics.scene.Scene;
-import de.survivalworkers.core.client.engine.io.HIDInput;
+import de.survivalworkers.core.client.engine.io.keys.HIDInput;
+import de.survivalworkers.core.client.engine.vk.Renderer;
+import de.survivalworkers.core.client.engine.vk.scene.Scene;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFW;
 
@@ -23,14 +23,6 @@ public class Engine {
         GLFW.glfwSetKeyCallback(window.getHandle(), input.getKeyboard());
         GLFW.glfwSetMouseButtonCallback(window.getHandle(), input.getMouseKeys());
         GLFW.glfwSetCursorPosCallback(window.getHandle(), input.getMousePos());
-    }
-
-    public boolean isKeyDown(int key) {
-        return input.getKeys()[key];
-    }
-
-    public boolean isMouseDown(int key) {
-        return input.getMouse()[key];
     }
 
     public void start(){

@@ -1,6 +1,6 @@
 package de.survivalworkers.core.client;
 
-import de.survivalworkers.core.client.vk.util.VkUtil;
+import de.survivalworkers.core.client.engine.vk.util.VkUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
