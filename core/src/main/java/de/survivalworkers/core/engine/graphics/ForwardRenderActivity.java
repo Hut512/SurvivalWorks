@@ -112,9 +112,8 @@ public class ForwardRenderActivity {
 
     private void createDepthImages() {
         int numImages = swapChain.getNumImages();
-        VkExtent2D swapChainExtent = swapChain.getCreateInfo().imageExtent();
-        final int width = swapChainExtent.width();
-        final int height = swapChainExtent.height();
+        final int width = swapChain.getWidth();
+        final int height = swapChain.getHeight();
         depthAttachments = new Attachment[numImages];
         for (int i = 0; i < numImages; i++) {
             depthAttachments[i] = new Attachment(device,width ,height ,
@@ -151,7 +150,6 @@ public class ForwardRenderActivity {
 
     private void createFrameBuffers() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            VkExtent2D swapChainExtent = swapChain.getCreateInfo().imageExtent();
             ImageView[] imageViews = swapChain.getImageViews();
             int numImages = imageViews.length;
 
@@ -160,7 +158,7 @@ public class ForwardRenderActivity {
             for (int i = 0; i < numImages; i++) {
                 pAttachments.put(0, imageViews[i].getImgView());
                 pAttachments.put(1, depthAttachments[i].getImageView().getImgView());
-                frameBuffers[i] = new FrameBuffer(device, swapChainExtent.width(), swapChainExtent.height(),
+                frameBuffers[i] = new FrameBuffer(device, swapChain.getWidth(), swapChain.getHeight(),
                         pAttachments, renderPass.getRenderPass());
             }
         }

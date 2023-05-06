@@ -32,8 +32,12 @@ public class SwapChain implements Closeable {
     private ImageView[] imageViews;
     @Getter
     private SyncSemaphores[] syncSemaphoresList;
-    @Getter
+
     private VkSwapchainCreateInfoKHR createInfo;
+    @Getter
+    private int width;
+    @Getter
+    private int height;
     @Getter
     private long handle;
     @Getter
@@ -42,6 +46,8 @@ public class SwapChain implements Closeable {
     public SwapChain(PhysicalDevice physicalDevice, LogicalDevice logicalDevice, long surface, int width, int height) {
         this.physicalDevice = physicalDevice;
         this.logicalDevice = logicalDevice;
+        this.height = height;
+        this.width = width;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             PhysicalDevice.SwapChainSupportDetails swapChainSupportDetails  = physicalDevice.querySwapChainSupport(stack);
 
