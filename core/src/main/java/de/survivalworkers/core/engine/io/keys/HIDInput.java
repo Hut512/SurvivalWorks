@@ -14,6 +14,14 @@ import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+/**
+ * This class is responsible for every input that is physically given through a HID<br>
+ * Keys that are to be used have to be registered in {@link #registerKeys()}<br>
+ * Key listeners to be used have to implement {@link KeyListener} with every method using the {@link KeyHandler} annotation and registered using {@link #registerKeyListener(KeyListener)}<br>
+ * Key drags to be used have to implement {@link MouseDragListener} with every method using the {@link DragHandler} annotation and registered using
+ * {@link #registerDragListener(MouseDragListener)}<br>
+ * Mouse move listeners to be used have to implement {@link MouseMoveListener} and registered using {@link #registerMoveListener(MouseMoveListener)}
+ */
 public class HIDInput {
     private final Map<String, Map<Method,KeyListener>> listeners;
     private final Map<String, Map<Method,MouseDragListener>> dragListeners;
@@ -53,6 +61,13 @@ public class HIDInput {
             if(!listeners.containsKey(name)) listeners.put(name , new HashMap<>());
             listeners.get(name).put(method,listener);
         }
+    }
+    
+    /**
+     * @param listener the listener that will be notified when the mouse has been moved
+     */
+    public void registerMoveListener(MouseMoveListener listener){
+        mouseMove.add(listener);
     }
 
     public void registerDragListener(MouseDragListener listener){
