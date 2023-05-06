@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import java.io.InputStream;
 
 public class Configuration {
+    public static final String KEY_CONFIG_NAME = "/keys.dat";
     private static Configuration instance;
     private static final String FILENAME = "game.properties";
     @Getter
