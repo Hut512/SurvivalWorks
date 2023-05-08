@@ -1,6 +1,6 @@
-package de.survivalworkers.core.client;
+package de.survivalworkers.core.client.engine;
 
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
+import de.survivalworkers.core.client.engine.vk.Util;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +76,7 @@ public class SWWindow implements Closeable {
     }
     
     public void createSurface(VkInstance instance, LongBuffer pSurface) {
-        VkUtil.check(glfwCreateWindowSurface(instance, handle, null, pSurface), "Failed to create surface");
+        Util.check(glfwCreateWindowSurface(instance, handle, null, pSurface), "Failed to create surface");
     }
 
     public void pollEvents(){

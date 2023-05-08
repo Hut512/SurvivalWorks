@@ -1,8 +1,9 @@
 package de.survivalworkers.core.client.engine.vk.shaders;
 
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
+import de.survivalworkers.core.client.engine.vk.Util;
+import de.survivalworkers.core.client.engine.vk.rendering.Device;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 
 import java.io.File;
@@ -11,15 +12,13 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.nio.file.Files;
 
-import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
-import static org.lwjgl.vulkan.VK13.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-import static org.lwjgl.vulkan.VK13.vkCreateShaderModule;
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 
 public class ShaderProgram {
-        private final SWLogicalDevice device;
+        private final Device device;
         private final ShaderModule[] shaderModules;
 
-        public ShaderProgram(SWLogicalDevice device, ShaderModuleData[] shaderModuledata) {
+        public ShaderProgram(Device device, ShaderModuleData[] shaderModuledata) {
                 try {
                         this.device = device;
                         int numModules = shaderModuledata != null ? shaderModuledata.length : 0;
@@ -34,9 +33,9 @@ public class ShaderProgram {
                 }
         }
 
-        public void close() {
+        public void delete() {
                 for (ShaderModule shaderModule : shaderModules) {
-                        vkDestroyShaderModule(device.getHandle(), shaderModule.shaderModule(), null);
+                        VK13.vkDestroyShaderModule(device.getDevice(), shaderModule.shaderModule(), null);
                 }
         }
 
@@ -46,7 +45,7 @@ public class ShaderProgram {
                         VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO).pCode(pCode);
 
                         LongBuffer lp = stack.mallocLong(1);
-                        VkUtil.check(vkCreateShaderModule(device.getHandle(), createInfo, null, lp), "Could not create Shader Module");
+                        Util.check(VK13.vkCreateShaderModule(device.getDevice(), createInfo, null, lp), "Could not create Shader Module");
                         return lp.get(0);
                 }
         }

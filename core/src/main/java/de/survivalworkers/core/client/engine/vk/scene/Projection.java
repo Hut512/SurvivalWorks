@@ -13,9 +13,9 @@ public class Projection {
         return projectionMatrix;
     }
 
-    public void resize(int width, int height) {;
+    public void resize(int width, int height) {
+        //Properties engProps = Properties.getInstance();
         projectionMatrix.identity();
-        /*projectionMatrix.setPerspective(engProps.getFov(), (float) width / (float) height,
-                engProps.getzNear(), engProps.getzFar(),true);*/
+        //projectionMatrix.setPerspective(engProps.getFov(), (float) width / (float) height,engProps.getzNear(), engProps.getzFar(),true);
     }
 }

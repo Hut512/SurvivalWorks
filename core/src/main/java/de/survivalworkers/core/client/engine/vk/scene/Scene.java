@@ -1,6 +1,7 @@
 package de.survivalworkers.core.client.engine.vk.scene;
 
-import de.survivalworkers.core.client.SWWindow;
+
+import de.survivalworkers.core.client.engine.SWWindow;
 
 import java.util.ArrayList;
 import java.util.HashMap;

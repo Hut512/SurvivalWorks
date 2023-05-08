@@ -1,6 +1,6 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
-import de.survivalworkers.core.client.engine.vk.util.Util;
+import de.survivalworkers.core.client.engine.vk.Util;
 import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -107,7 +107,8 @@ public class ModelLoader {
             String texturePath = aiTexturePath.dataString();
             if(texturePath != null && texturePath.length() > 0){
                 //TODO Replace with real Texture path (Currently uses the path specified in the .mtl file)
-                texturePath = texPath + File.separator + new File(texturePath).getName();
+                //texturePath = texPath + File.separator + new File(texturePath).getName();
+                texturePath = "D:\\Projects\\JIgelEngine\\JIgelEngine\\src\\main\\resources\\models\\orca_texture.png";
                 diffuse = new Vector4f(0.0f,0.0f,0.0f,0.0f);
             }
 

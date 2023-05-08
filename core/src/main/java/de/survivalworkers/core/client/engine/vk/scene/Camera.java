@@ -69,7 +69,7 @@ public class Camera {
     }
 
     private void recalculate() {
-        viewMatrix.identity().rotateX(rotation.x).rotateY(rotation.y).translation(-position.x,-position.y,-position.z);
+        viewMatrix.identity().rotateX(rotation.x).rotateY(rotation.y).translate(-position.x, -position.y, -position.z);
     }
 
     public void setPos(float x,float y,float z){

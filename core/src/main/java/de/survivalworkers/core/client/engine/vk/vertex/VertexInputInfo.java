@@ -4,7 +4,7 @@ import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 
 public abstract class VertexInputInfo {
     protected VkPipelineVertexInputStateCreateInfo stateInfo;
-    public void close() {
+    public void delete(){
         stateInfo.free();
     }
 

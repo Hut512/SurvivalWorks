@@ -1,23 +1,16 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
-import de.survivalworkers.core.client.engine.vk.rendering.Buffer;
-import de.survivalworkers.core.client.engine.vk.rendering.CommandBuffer;
-import de.survivalworkers.core.client.engine.vk.rendering.CommandPool;
-import de.survivalworkers.core.client.engine.vk.rendering.Fence;
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
+import de.survivalworkers.core.client.engine.vk.rendering.*;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkBufferCopy;
-import org.lwjgl.vulkan.VkQueue;
-import org.lwjgl.vulkan.VkSubmitInfo;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.lwjgl.vulkan.VK10.*;
 
 public class Model {
     private final String modelId;
@@ -28,13 +21,13 @@ public class Model {
         materials = new ArrayList<>();
     }
 
-    private static TransferBuffers createIndicesBuffers(SWLogicalDevice device, ModelData.MeshData meshData) {
+    private static TransferBuffers createIndicesBuffers(Device device, ModelData.MeshData meshData) {
         int[] indices = meshData.indices();
         int numIndices = indices.length;
         int bufferSize = numIndices * 4;
 
-        Buffer srcBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        Buffer dstBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer srcBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Buffer dstBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK13.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         long mappedMemory = srcBuffer.map();
         IntBuffer data = MemoryUtil.memIntBuffer(mappedMemory, (int) srcBuffer.getRequestedSize());
@@ -44,7 +37,7 @@ public class Model {
         return new TransferBuffers(srcBuffer, dstBuffer);
     }
 
-    private static TransferBuffers createVerticesBuffers(SWLogicalDevice device, ModelData.MeshData meshData) {
+    private static TransferBuffers createVerticesBuffers(Device device, ModelData.MeshData meshData) {
         float[] positions = meshData.pos();
         float[] textCoords = meshData.texCords();
         if (textCoords == null || textCoords.length == 0) {
@@ -53,8 +46,8 @@ public class Model {
         int numElements = positions.length + textCoords.length;
         int bufferSize = numElements * 4;
 
-        Buffer srcBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        Buffer dstBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer srcBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Buffer dstBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK13.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         long mappedMemory = srcBuffer.map();
         FloatBuffer data = MemoryUtil.memFloatBuffer(mappedMemory, (int) srcBuffer.getRequestedSize());
@@ -79,14 +72,14 @@ public class Model {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack)
                     .srcOffset(0).dstOffset(0).size(transferBuffers.srcBuffer().getRequestedSize());
-            vkCmdCopyBuffer(cmd.getCmdBuf(), transferBuffers.srcBuffer().getBuffer(),
+            VK13.vkCmdCopyBuffer(cmd.getCmdBuf(), transferBuffers.srcBuffer().getBuffer(),
                     transferBuffers.dstBuffer().getBuffer(), copyRegion);
         }
     }
 
-    public static List<Model> transformModels(List<ModelData> modelDataList, TextureCache texCache, CommandPool commandPool, VkQueue queue) {
+    public static List<Model> transformModels(List<ModelData> modelDataList, TextureCache texCache, CommandPool commandPool, Queue queue) {
         List<Model> models = new ArrayList<>();
-        SWLogicalDevice device = commandPool.getDevice();
+        Device device = commandPool.getDevice();
         CommandBuffer cmd = new CommandBuffer(commandPool, true, true);
         List<Buffer> stagingBufferList = new ArrayList<>();
         List<Texture> textures = new ArrayList<>();
@@ -127,22 +120,19 @@ public class Model {
         Fence fence = new Fence(device, true);
         fence.reset();
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack)
-                    .sType$Default()
-                    .pCommandBuffers(stack.pointers(cmd.getCmdBuf()));
-            vkQueueSubmit(queue, submitInfo, fence.getHandle());
+            queue.submit(stack.pointers(cmd.getCmdBuf()), null, null, null, fence);
         }
         fence.fenceWait();
-        fence.close();
-        cmd.close();
+        fence.delete();
+        cmd.delete();
 
-        stagingBufferList.forEach(Buffer::close);
+        stagingBufferList.forEach(Buffer::delete);
 
         return models;
     }
 
-    private static Material transformMaterial(ModelData.Material material, SWLogicalDevice device, TextureCache cache, CommandBuffer cmdBuf, List<Texture> textures){
-        Texture tex = cache.createTexture(device,material.texPath(), VK_FORMAT_R8G8B8A8_SRGB);
+    private static Material transformMaterial(ModelData.Material material,Device device,TextureCache cache,CommandBuffer cmdBuf,List<Texture> textures){
+        Texture tex = cache.createTexture(device,material.texPath(),VK13.VK_FORMAT_R8G8B8A8_SRGB);
         boolean hasTex = material.texPath() != null && material.texPath().trim().length() > 0;
         if(hasTex){
             tex.recordTextureTransition(cmdBuf);
@@ -152,8 +142,8 @@ public class Model {
         return new Material(material.diffuseColor(),tex,hasTex,new ArrayList<>());
     }
 
-    public void close() {
-        materials.forEach(material -> material.meshes.forEach(Mesh::close));
+    public void delete() {
+        materials.forEach(material -> material.meshes.forEach(Mesh::delete));
     }
 
     public String getModelId() {
@@ -167,16 +157,16 @@ public class Model {
     private record TransferBuffers(Buffer srcBuffer, Buffer dstBuffer) {
     }
 
-    public record Material(Vector4f diffuseColor, Texture texture, boolean hasTexture, List<Mesh> meshes){
+    public record Material(Vector4f diffuseColor,Texture texture,boolean hasTexture,List<Mesh> meshes){
         public boolean isTransparent(){
             return texture.isTransparent();
         }
     }
 
     public record Mesh(Buffer verticesBuffer, Buffer indicesBuffer, int numIndices) {
-        public void close() {
-            verticesBuffer.close();
-            indicesBuffer.close();
+        public void delete() {
+            verticesBuffer.delete();
+            indicesBuffer.delete();
         }
     }
 }

@@ -1,111 +1,76 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.SurvivalWorkers;
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
-import de.survivalworkers.core.client.engine.vk.device.SWPhysicalDevice;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import de.survivalworkers.core.client.engine.SWWindow;
+import de.survivalworkers.core.client.engine.vk.Util;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
-import java.io.Closeable;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
-import static org.lwjgl.vulkan.KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-import static org.lwjgl.vulkan.KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-import static org.lwjgl.vulkan.KHRSwapchain.*;
+import static org.lwjgl.vulkan.KHRSwapchain.vkDestroySwapchainKHR;
 import static org.lwjgl.vulkan.VK10.*;
 
-@Slf4j
-public class SwapChain implements Closeable {
-    private final SWPhysicalDevice physicalDevice;
-    @Getter
-    private final SWLogicalDevice logicalDevice;
-    @Getter
-    private final int numImages;
-    @Getter
+public class SwapChain {
+    private final Device device;
+    private final ImageView[] imageViews;
     private final SurfaceFormat surfaceFormat;
-    @Getter
-    private ImageView[] imageViews;
-    @Getter
-    private SyncSemaphores[] syncSemaphoresList;
+    private final VkExtent2D swapChainExtent;
+    private final SyncSemaphores[] syncSemaphoresList;
+    private final long swapChain;
 
-    private VkSwapchainCreateInfoKHR createInfo;
-    @Getter
-    private int width;
-    @Getter
-    private int height;
-    @Getter
-    private long handle;
-    @Getter
     private int currentFrame;
+    private int numImages;
 
-    public SwapChain(SWPhysicalDevice physicalDevice, SWLogicalDevice logicalDevice, long surface, int windowWidth, int windowHeight) {
-        this.physicalDevice = physicalDevice;
-        this.logicalDevice = logicalDevice;
-        this.height = height;
-        this.width = width;
+    public SwapChain(Device device, Surface surface, SWWindow window) {
+        this.device = device;
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            SWPhysicalDevice.SwapChainSupportDetails swapChainSupportDetails  = physicalDevice.getSwapChainSupportDetails();
 
-            numImages = calcNumImages(swapChainSupportDetails.getCapabilities());
+            PhysicalDevice physicalDevice = device.getPhysicalDevice();
 
-            surfaceFormat = selectSurfaceFormat(swapChainSupportDetails.getFormats());
+            // Get surface capabilities
+            VkSurfaceCapabilitiesKHR surfCapabilities = VkSurfaceCapabilitiesKHR.calloc(stack);
+            Util.check(KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.getPhysicalDevice().getPhysicalDevice(), surface.getSurface(), surfCapabilities), "Failed to get surface capabilities");
 
-            createInfo = VkSwapchainCreateInfoKHR.calloc(stack)
-                    .sType$Default()
-                    .surface(surface)
-                    .minImageCount(numImages)
-                    .imageFormat(surfaceFormat.imageFormat())
-                    .imageColorSpace(surfaceFormat.colorSpace())
-                    .imageArrayLayers(1)
-                    .imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-                    .imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
-                    .preTransform(swapChainSupportDetails.getCapabilities().currentTransform())
-                    .compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
-                    .presentMode(SurvivalWorkers.getInstance().getClientOptions().getPresentMode())
-                    .clipped(true);
+            numImages = calcNumImages(surfCapabilities, 3/*INFO replace with real image count*/);
 
+            surfaceFormat = calcSurfaceFormat(physicalDevice, surface);
+
+            swapChainExtent = calcSwapChainExtent(window, surfCapabilities);
+
+            VkSwapchainCreateInfoKHR createInfo = VkSwapchainCreateInfoKHR.calloc(stack).sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR).
+                    surface(surface.getSurface()).minImageCount(numImages).imageFormat(surfaceFormat.imageFormat()).imageColorSpace(surfaceFormat.colorSpace()).
+                    imageExtent(swapChainExtent).
+                    imageArrayLayers(1).imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT).imageSharingMode(VK_SHARING_MODE_EXCLUSIVE).
+                    preTransform(surfCapabilities.currentTransform()).compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR).clipped(true);
+            //for vsync
+            //createInfo.presentMode(KHRSurface.VK_PRESENT_MODE_FIFO_KHR);
+            createInfo.presentMode(KHRSurface.VK_PRESENT_MODE_IMMEDIATE_KHR);
+
+            LongBuffer lp = stack.mallocLong(1);
+            Util.check(KHRSwapchain.vkCreateSwapchainKHR(device.getDevice(), createInfo, null, lp), "Failed to create swap chain");
+            swapChain = lp.get(0);
+
+            imageViews = createImageViews(stack, device, swapChain, surfaceFormat.imageFormat);
+            numImages = imageViews.length;
             syncSemaphoresList = new SyncSemaphores[numImages];
             for (int i = 0; i < numImages; i++) {
-                syncSemaphoresList[i] = new SyncSemaphores(logicalDevice);
+                syncSemaphoresList[i] = new SyncSemaphores(device);
             }
-
-            resize(windowWidth, windowHeight);
-        }
-    }
-
-    public void resize(int windowWidth, int windowHeight) {
-        long start = System.currentTimeMillis();
-        vkDestroySwapchainKHR(logicalDevice.getHandle(), handle, null);
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            resizeSwapChainExtent(createInfo.imageExtent(), physicalDevice.getSwapChainSupportDetails().getCapabilities(), windowWidth, windowHeight);
-            LongBuffer pSwapchain = stack.mallocLong(1);
-            VkUtil.check(vkCreateSwapchainKHR(logicalDevice.getHandle(), createInfo, null, pSwapchain), "Failed to create swap chain");
-            handle = pSwapchain.get(0);
-
-            imageViews = createImageViews(stack, logicalDevice, handle, surfaceFormat.imageFormat);
             currentFrame = 0;
         }
-        log.trace("Swapchain resized in {}ms", System.currentTimeMillis() - start);
     }
 
     public boolean acquireNextImage() {
         boolean resize = false;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer ip = stack.mallocInt(1);
-            int err = vkAcquireNextImageKHR(logicalDevice.getHandle(), handle, Long.MAX_VALUE, syncSemaphoresList[currentFrame].imgAcquisitionSemaphore().getHandle(), MemoryUtil.NULL, ip);
-            if (err == VK_ERROR_OUT_OF_DATE_KHR) {
-                resize = true;
-            } else if (err == VK_SUBOPTIMAL_KHR) {
-                //Sub Optimal
-            } else {
-                VkUtil.check(err, "Failed to acquire image");
-            }
+            int err = KHRSwapchain.vkAcquireNextImageKHR(device.getDevice(), swapChain, ~0L, syncSemaphoresList[currentFrame].imgAcquisitionSemaphore().getSemaphore(), MemoryUtil.NULL, ip);
+            if (err == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) resize = true;
+            else if (err == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+            } else if (err != VK_SUCCESS) throw new RuntimeException("Failed to acquire image: " + err);
 
             currentFrame = ip.get(0);
         }
@@ -113,51 +78,77 @@ public class SwapChain implements Closeable {
         return resize;
     }
 
-    private int calcNumImages(VkSurfaceCapabilitiesKHR surfaceCapabilities) {
-        int result = Math.max(3, surfaceCapabilities.minImageCount());
-        if (surfaceCapabilities.maxImageCount() != 0) result = Math.min(result, surfaceCapabilities.maxImageCount());
+    private int calcNumImages(VkSurfaceCapabilitiesKHR surfCapabilities, int requestedImages) {
+        int maxImages = surfCapabilities.maxImageCount();
+        int minImages = surfCapabilities.minImageCount();
+        int result = minImages;
+        if (maxImages != 0) result = Math.min(requestedImages, maxImages);
+        result = Math.max(result, minImages);
+
         return result;
     }
 
-    private SurfaceFormat selectSurfaceFormat(VkSurfaceFormatKHR.Buffer surfaceFormats) {
-        int format = 0;
-        int colorSpace = 0;
-        for (int i = 0; i < surfaceFormats.capacity(); i++) {
-            VkSurfaceFormatKHR surfaceFormat = surfaceFormats.get(i);
-            if (surfaceFormat.format() != VK_FORMAT_B8G8R8A8_SRGB)
-                continue;
-            format = surfaceFormat.format();
-            colorSpace = surfaceFormat.colorSpace();
-            if (colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-                break;
+    private SurfaceFormat calcSurfaceFormat(PhysicalDevice physicalDevice, Surface surface) {
+        int imageFormat;
+        int colorSpace;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+
+            IntBuffer ip = stack.mallocInt(1);
+            Util.check(KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice.getPhysicalDevice(), surface.getSurface(), ip, null), "Failed to get the number surface formats");
+            int numFormats = ip.get(0);
+            if (numFormats <= 0) throw new RuntimeException("No surface formats retrieved");
+
+
+            VkSurfaceFormatKHR.Buffer surfaceFormats = VkSurfaceFormatKHR.calloc(numFormats, stack);
+            Util.check(KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice.getPhysicalDevice(), surface.getSurface(), ip, surfaceFormats), "Failed to get surface formats");
+
+            imageFormat = VK_FORMAT_B8G8R8A8_SRGB;
+            colorSpace = surfaceFormats.get(0).colorSpace();
+            for (int i = 0; i < numFormats; i++) {
+                VkSurfaceFormatKHR surfaceFormatKHR = surfaceFormats.get(i);
+                if (surfaceFormatKHR.format() == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormatKHR.colorSpace() == KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                    imageFormat = surfaceFormatKHR.format();
+                    colorSpace = surfaceFormatKHR.colorSpace();
+                    break;
+                }
+            }
         }
-        return new SurfaceFormat(format, colorSpace);
+        return new SurfaceFormat(imageFormat, colorSpace);
     }
 
-    public void resizeSwapChainExtent(VkExtent2D extend, VkSurfaceCapabilitiesKHR surfaceCapabilities, int windowWidth, int windowHeight) {
-        if (surfaceCapabilities.currentExtent().width() == 0xFFFFFFFF) {
-            int width = Math.min(windowWidth, surfaceCapabilities.maxImageExtent().width());
-            width = Math.max(width, surfaceCapabilities.minImageExtent().width());
+    public VkExtent2D calcSwapChainExtent(SWWindow window, VkSurfaceCapabilitiesKHR surfCapabilities) {
+        VkExtent2D result = VkExtent2D.calloc();
+        if (surfCapabilities.currentExtent().width() == 0xFFFFFFFF) {
+            int width = Math.min(window.getWidth(), surfCapabilities.maxImageExtent().width());
+            width = Math.max(width, surfCapabilities.minImageExtent().width());
 
-            int height = Math.min(windowHeight, surfaceCapabilities.maxImageExtent().height());
-            height = Math.max(height, surfaceCapabilities.minImageExtent().height());
+            int height = Math.min(window.getHeight(), surfCapabilities.maxImageExtent().height());
+            height = Math.max(height, surfCapabilities.minImageExtent().height());
 
-            extend.width(width);
-            extend.height(height);
+            result.width(width);
+            result.height(height);
         } else {
-            extend.set(surfaceCapabilities.currentExtent());
+            result.set(surfCapabilities.currentExtent());
         }
+        return result;
     }
 
-    private ImageView[] createImageViews(MemoryStack stack, SWLogicalDevice device, long swapChain, int format) {
+    public void delete() {
+        swapChainExtent.free();
+        Arrays.stream(imageViews).forEach(ImageView::delete);
+        Arrays.stream(syncSemaphoresList).forEach(SyncSemaphores::delete);
+        vkDestroySwapchainKHR(device.getDevice(), swapChain, null);
+    }
+
+    private ImageView[] createImageViews(MemoryStack stack, Device device, long swapChain, int format) {
         ImageView[] result;
 
         IntBuffer ip = stack.mallocInt(1);
-        VkUtil.check(KHRSwapchain.vkGetSwapchainImagesKHR(device.getHandle(), swapChain, ip, null), "Could not get Images");
+        Util.check(KHRSwapchain.vkGetSwapchainImagesKHR(device.getDevice(), swapChain, ip, null), "Could not get Images");
         int numImages = ip.get(0);
 
         LongBuffer swapChainImages = stack.mallocLong(numImages);
-        VkUtil.check(KHRSwapchain.vkGetSwapchainImagesKHR(device.getHandle(), swapChain, ip, swapChainImages), "Could not create Images(1)");
+        Util.check(KHRSwapchain.vkGetSwapchainImagesKHR(device.getDevice(), swapChain, ip, swapChainImages), "Could not create Images(1)");
 
         result = new ImageView[numImages];
         ImageView.ImageViewData imageViewData = new ImageView.ImageViewData().format(format).aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
@@ -168,47 +159,84 @@ public class SwapChain implements Closeable {
         return result;
     }
 
-    public boolean presentImage(VkQueue queue) {
+    public int getCurrentFrame() {
+        return currentFrame;
+    }
+
+    public Device getDevice() {
+        return device;
+    }
+
+    public ImageView[] getImageViews() {
+        return imageViews;
+    }
+
+    public SurfaceFormat getSurfaceFormat() {
+        return surfaceFormat;
+    }
+
+    public VkExtent2D getSwapChainExtent() {
+        return swapChainExtent;
+    }
+
+    public SyncSemaphores[] getSyncSemaphoresList() {
+        return syncSemaphoresList;
+    }
+
+    public long getSwapChain() {
+        return swapChain;
+    }
+
+    public int getNumImages() {
+        return numImages;
+    }
+
+    public boolean presentImage(Queue queue) {
         boolean resize = false;
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            VkPresentInfoKHR present = VkPresentInfoKHR.calloc(stack)
-                    .sType$Default()
-                    .pWaitSemaphores(stack.longs(syncSemaphoresList[currentFrame].renderCompleteSemaphore().getHandle()))
-                    .swapchainCount(1)
-                    .pSwapchains(stack.longs(handle))
-                    .pImageIndices(stack.ints(currentFrame));
+            VkPresentInfoKHR present = VkPresentInfoKHR.calloc(stack).sType(KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR).pWaitSemaphores(stack.longs(syncSemaphoresList[currentFrame].renderCompleteSemaphore().getSemaphore()))
+                    .swapchainCount(1).pSwapchains(stack.longs(swapChain)).pImageIndices(stack.ints(currentFrame));
 
-            int err = vkQueuePresentKHR(queue, present);
-            if (err == VK_ERROR_OUT_OF_DATE_KHR) {
+            int err = KHRSwapchain.vkQueuePresentKHR(queue.getQueue(), present);
+            if (err == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
                 resize = true;
-            } else if (err == VK_SUBOPTIMAL_KHR) {
+            } else if (err == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
                 //Sub Optimal
             } else if (err != VK_SUCCESS) {
-                VkUtil.check(err, "Failed to present KHR");
+                throw new RuntimeException("Failed to present KHR: " + err);
             }
         }
         currentFrame = (currentFrame + 1) % imageViews.length;
         return resize;
     }
 
-    public record SurfaceFormat(int imageFormat, int colorSpace) {}
+    /*public void resize(int windowWidth, int windowHeight) {
+        long start = System.currentTimeMillis();
+        vkDestroySwapchainKHR(device.getDevice(), swapChain, null);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            resizeSwapChainExtent(createInfo.imageExtent(), device.getPhysicalDevice().getSwapChainSupportDetails().getCapabilities(), windowWidth, windowHeight);
+            LongBuffer pSwapchain = stack.mallocLong(1);
+            VkUtil.check(vkCreateSwapchainKHR(logicalDevice.getHandle(), createInfo, null, pSwapchain), "Failed to create swap chain");
+            handle = pSwapchain.get(0);
+
+            imageViews = createImageViews(stack, logicalDevice, handle, surfaceFormat.imageFormat);
+            currentFrame = 0;
+        }
+        log.trace("Swapchain resized in {}ms", System.currentTimeMillis() - start);
+    }*/
+
+    public record SurfaceFormat(int imageFormat, int colorSpace) {
+    }
 
     public record SyncSemaphores(Semaphore imgAcquisitionSemaphore, Semaphore renderCompleteSemaphore) {
 
-        public SyncSemaphores(SWLogicalDevice device) {
+        public SyncSemaphores(Device device) {
             this(new Semaphore(device), new Semaphore(device));
         }
 
-        public void close() {
-            imgAcquisitionSemaphore.close();
-            renderCompleteSemaphore.close();
+        public void delete() {
+            imgAcquisitionSemaphore.delete();
+            renderCompleteSemaphore.delete();
         }
-    }
-
-    public void close() {
-        vkDestroySwapchainKHR(logicalDevice.getHandle(), handle, null);
-        createInfo.free();
-        Arrays.stream(imageViews).forEach(ImageView::close);
-        Arrays.stream(syncSemaphoresList).forEach(SyncSemaphores::close);
     }
 }

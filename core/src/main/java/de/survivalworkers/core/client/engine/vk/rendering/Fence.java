@@ -1,8 +1,8 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
+import de.survivalworkers.core.client.engine.vk.Util;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
 
 import java.nio.LongBuffer;
@@ -10,33 +10,33 @@ import java.nio.LongBuffer;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class Fence {
-    private final SWLogicalDevice device;
-    private final long handle;
+    private final Device device;
+    private final long fence;
 
-    public Fence(SWLogicalDevice device, boolean signaled){
+    public Fence(Device device,boolean signaled){
         this.device = device;
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            VkFenceCreateInfo createInfo = VkFenceCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO).flags(signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0);
+            VkFenceCreateInfo createInfo = VkFenceCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO).flags(signaled ? VK13.VK_FENCE_CREATE_SIGNALED_BIT : 0);
 
             LongBuffer lp = stack.mallocLong(1);
-            VkUtil.check(vkCreateFence(device.getHandle(), createInfo, null, lp),"Could not create Fence");
-            handle = lp.get(0);
+            Util.check(vkCreateFence(device.getDevice(),createInfo,null,lp),"Could not create Fence");
+            fence = lp.get(0);
         }
     }
 
-    public void close() {
-        vkDestroyFence(device.getHandle(), handle,null);
+    public void delete(){
+        VK13.vkDestroyFence(device.getDevice(),fence,null);
     }
 
     public void fenceWait(){
-        vkWaitForFences(device.getHandle(), handle, true, Long.MAX_VALUE);
+        vkWaitForFences(device.getDevice(),fence,true,Long.MAX_VALUE);
     }
 
-    public long getHandle() {
-        return handle;
+    public long getFence() {
+        return fence;
     }
 
     public void reset(){
-        vkResetFences(device.getHandle(), handle);
+        vkResetFences(device.getDevice(),fence);
     }
 }

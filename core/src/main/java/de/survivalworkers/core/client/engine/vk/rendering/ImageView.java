@@ -1,31 +1,31 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 
 import java.nio.LongBuffer;
 
-import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK10.vkDestroyImageView;
 
 public class ImageView {
-    private final SWLogicalDevice device;
+    private final Device device;
     private final long imgView;
 
-    public ImageView(SWLogicalDevice device, long img, ImageViewData data) {
+    public ImageView(Device device,long img,ImageViewData data) {
         this.device = device;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             LongBuffer lp = stack.mallocLong(1);
-            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO).image(img).viewType(data.viewType).format(data.format).
+            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO).image(img).viewType(data.viewType).format(data.format).
                     subresourceRange(it -> it.aspectMask(data.aspectMask).baseMipLevel(0).levelCount(data.mipLevels).baseArrayLayer(data.baseArrayLayer).layerCount(data.layerCount));
-            vkCreateImageView(device.getHandle(), createInfo, null, lp);
+            VK13.vkCreateImageView(device.getDevice(), createInfo, null, lp);
             imgView = lp.get(0);
         }
     }
 
 
-    public void close() {
-        vkDestroyImageView(device.getHandle(), imgView, null);
+    public void delete() {
+        vkDestroyImageView(device.getDevice(), imgView, null);
     }
 
 
@@ -45,35 +45,35 @@ public class ImageView {
             this.baseArrayLayer = 0;
             this.layerCount = 1;
             this.mipLevels = 1;
-            this.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            this.viewType = VK13.VK_IMAGE_VIEW_TYPE_2D;
         }
 
-        public ImageView.ImageViewData aspectMask(int aspectMask) {
+        public ImageViewData aspectMask(int aspectMask) {
             this.aspectMask = aspectMask;
             return this;
         }
 
-        public ImageView.ImageViewData baseArrayLayer(int baseArrayLayer) {
+        public ImageViewData baseArrayLayer(int baseArrayLayer) {
             this.baseArrayLayer = baseArrayLayer;
             return this;
         }
 
-        public ImageView.ImageViewData format(int format) {
+        public ImageViewData format(int format) {
             this.format = format;
             return this;
         }
 
-        public ImageView.ImageViewData layerCount(int layerCount) {
+        public ImageViewData layerCount(int layerCount) {
             this.layerCount = layerCount;
             return this;
         }
 
-        public ImageView.ImageViewData mipLevels(int mipLevels) {
+        public ImageViewData mipLevels(int mipLevels) {
             this.mipLevels = mipLevels;
             return this;
         }
 
-        public ImageView.ImageViewData viewType(int viewType) {
+        public ImageViewData viewType(int viewType) {
             this.viewType = viewType;
             return this;
         }

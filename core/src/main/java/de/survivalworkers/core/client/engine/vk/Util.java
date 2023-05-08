@@ -1,6 +1,7 @@
-package de.survivalworkers.core.client.engine.vk.util;
+package de.survivalworkers.core.client.engine.vk;
 
 import lombok.experimental.UtilityClass;
+import java.util.List;
 
 import static org.lwjgl.vulkan.EXTBufferDeviceAddress.VK_ERROR_INVALID_DEVICE_ADDRESS_EXT;
 import static org.lwjgl.vulkan.EXTDebugReport.VK_ERROR_VALIDATION_FAILED_EXT;
@@ -23,7 +24,8 @@ import static org.lwjgl.vulkan.VK12.VK_ERROR_FRAGMENTATION;
 import static org.lwjgl.vulkan.VK13.VK_PIPELINE_COMPILE_REQUIRED;
 
 @UtilityClass
-public class VkUtil {
+public class Util {
+
     public void check(int returnCode, String errorMessage) {
         if (returnCode != VK_SUCCESS) {
             throw new RuntimeException(errorMessage + ": " + translateVulkanResult(returnCode));
@@ -54,7 +56,7 @@ public class VkUtil {
             case VK_OPERATION_NOT_DEFERRED_KHR -> "A deferred operation was requested and no operations were deferred.";
             case VK_PIPELINE_COMPILE_REQUIRED -> "A requested pipeline creation would have required compilation, but the application requested compilation to not be performed.";
 
-                // Error codes
+            // Error codes
             case VK_ERROR_OUT_OF_HOST_MEMORY -> "A host memory allocation has failed.";
             case VK_ERROR_OUT_OF_DEVICE_MEMORY -> "A device memory allocation has failed.";
             case VK_ERROR_INITIALIZATION_FAILED ->
@@ -105,5 +107,20 @@ public class VkUtil {
             case VK_ERROR_VALIDATION_FAILED_EXT -> "A validation layer found an error.";
             default -> String.format("%s [%d]", "Unknown", result);
         };
+    }
+    public static float[] toArrayFloat(List<Float> list){
+        float[] arr = new float[list.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
+    }
+
+    public static int[] toArrayInt(List<Integer> list){
+        int[] arr = new int[list.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
     }
 }

@@ -1,20 +1,18 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
+import de.survivalworkers.core.client.engine.vk.Util;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo;
 import org.lwjgl.vulkan.VkDescriptorPoolSize;
 
 import java.nio.LongBuffer;
 import java.util.List;
 
-import static org.lwjgl.vulkan.VK10.*;
-
 public class DescriptorPool {
-    private final SWLogicalDevice device;
+    private final Device device;
     private final long descriptorPool;
-    public DescriptorPool(SWLogicalDevice device, List<DescriptorTypeCount> descriptors){
+    public DescriptorPool(Device device, List<DescriptorTypeCount> descriptors){
         this.device = device;
         try(MemoryStack stack = MemoryStack.stackPush()) {
             int maxSets = 0;
@@ -24,11 +22,11 @@ public class DescriptorPool {
                 typeCounts.get(i).type(descriptors.get(i).type).descriptorCount(descriptors.get(i).count());
             }
 
-            VkDescriptorPoolCreateInfo createInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO).flags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT).pPoolSizes(typeCounts).
+            VkDescriptorPoolCreateInfo createInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO).flags(VK13.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT).pPoolSizes(typeCounts).
                     maxSets(maxSets);
 
             LongBuffer lp = stack.mallocLong(1);
-            VkUtil.check(vkCreateDescriptorPool(device.getHandle(),createInfo,null,lp),"Could not create descriptor Pool");
+            Util.check(VK13.vkCreateDescriptorPool(device.getDevice(),createInfo,null,lp),"Could not create descriptor Pool");
             descriptorPool = lp.get(0);
         }
     }
@@ -40,15 +38,15 @@ public class DescriptorPool {
             LongBuffer lp = stack.mallocLong(1);
             lp.put(0,descriptorSet);
 
-            VkUtil.check(vkFreeDescriptorSets(device.getHandle(),descriptorPool,lp),"Could not free Descriptor Set");
+            Util.check(VK13.vkFreeDescriptorSets(device.getDevice(),descriptorPool,lp),"Could not free Descriptor Set");
         }
     }
 
-    public void close() {
-        vkDestroyDescriptorPool(device.getHandle(),descriptorPool,null);
+    public void delete(){
+        VK13.vkDestroyDescriptorPool(device.getDevice(),descriptorPool,null);
     }
 
-    public SWLogicalDevice getDevice() {
+    public Device getDevice() {
         return device;
     }
 

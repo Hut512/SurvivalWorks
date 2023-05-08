@@ -1,19 +1,20 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
-import de.survivalworkers.core.client.engine.vk.device.SWLogicalDevice;
+import de.survivalworkers.core.client.engine.vk.rendering.Device;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class TextureCache {
-    private final HashMap<String, Texture> textures;
+    private final Map<String,Texture> textures;
 
     public TextureCache(){
         textures = new HashMap<>();
     }
 
-    public Texture createTexture(SWLogicalDevice device, String path, int format){
+    public Texture createTexture(Device device, String path, int format){
         String texPath = path;
-        if(path == null || path.trim().isEmpty())texPath = /*Properties.getInstance().getTexPath()*/ "";
+        if(path == null || path.trim().isEmpty())texPath = "";
         Texture texture = textures.get(texPath);
         if(texture == null){
             texture = new Texture(device,texPath,format);
@@ -22,8 +23,8 @@ public class TextureCache {
         return texture;
     }
 
-    public void close() {
-        textures.forEach((k,v) -> v.close());
+    public void delete(){
+        textures.forEach((k,v) -> v.delete());
         textures.clear();
     }
 }

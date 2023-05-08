@@ -1,15 +1,14 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.client.engine.vk.util.VkUtil;
+import de.survivalworkers.core.client.engine.vk.Util;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.io.Closeable;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class RenderPass implements Closeable {
+public class RenderPass {
     private final SwapChain swapChain;
     private final long renderPass;
 
@@ -43,14 +42,14 @@ public class RenderPass implements Closeable {
             VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO).pAttachments(attachments).pSubpasses(subPass).pDependencies(subpassDependencies);
 
             LongBuffer lp = stack.mallocLong(1);
-            VkUtil.check(vkCreateRenderPass(swapChain.getLogicalDevice().getHandle(), renderPassInfo, null, lp),
+            Util.check(vkCreateRenderPass(swapChain.getDevice().getDevice(), renderPassInfo, null, lp),
                     "Failed to create render pass");
             renderPass = lp.get(0);
         }
     }
 
-    public void close() {
-        vkDestroyRenderPass(swapChain.getLogicalDevice().getHandle(), renderPass,null);
+    public void delete(){
+        VK13.vkDestroyRenderPass(swapChain.getDevice().getDevice(), renderPass,null);
     }
 
     public long getRenderPass() {

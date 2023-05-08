@@ -1,8 +1,8 @@
 package de.survivalworkers.core.client.engine;
 
-import de.survivalworkers.core.client.SWWindow;
+import de.survivalworkers.core.SurvivalWorkers;
 import de.survivalworkers.core.client.engine.io.keys.HIDInput;
-import de.survivalworkers.core.client.engine.vk.Renderer;
+import de.survivalworkers.core.client.engine.vk.Render;
 import de.survivalworkers.core.client.engine.vk.scene.Scene;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFW;
@@ -11,15 +11,14 @@ import org.lwjgl.glfw.GLFW;
 public class Engine {
     private boolean running;
     private SWWindow window;
-    private HIDInput input;
-    private Renderer render;
+    private Render render;
     private final Scene scene;
 
-    public Engine() {
+    public Engine(HIDInput input, SurvivalWorkers workers) {
         window = new SWWindow();
-        input = new HIDInput();
         scene = new Scene(window);
-        render = new Renderer(window, scene);
+        render = new Render(window, scene);
+        workers.init(scene,render);
         GLFW.glfwSetKeyCallback(window.getHandle(), input.getKeyboard());
         GLFW.glfwSetMouseButtonCallback(window.getHandle(), input.getMouseKeys());
         GLFW.glfwSetCursorPosCallback(window.getHandle(), input.getMousePos());
@@ -64,9 +63,5 @@ public class Engine {
 
     public void close() {
         window.close();
-    }
-
-    public HIDInput getInput() {
-        return input;
     }
 }
