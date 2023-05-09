@@ -1,6 +1,7 @@
 package de.survivalworkers.core.client.engine.io.keys;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -22,8 +23,10 @@ import static org.lwjgl.glfw.GLFW.*;
  * {@link #registerDragListener(MouseDragListener)}<br>
  * Mouse move listeners to be used have to implement {@link MouseMoveListener} and registered using {@link #registerMoveListener(MouseMoveListener)}
  */
+@Slf4j
 public class HIDInput {
     private final Map<String, Map<Method,KeyListener>> listeners;
+    private final Map<String, Map<Method,KeyListener>> continousListeners;
     private final Map<String, Map<Method,MouseDragListener>> dragListeners;
     private final Map<Integer,String> defaultKeys;
     private final List<MouseMoveListener> mouseMove;
@@ -47,19 +50,32 @@ public class HIDInput {
     private void registerKeyListener(KeyListener listener){
         for (Method method : listener.getClass().getMethods()) {
             if(!method.isAnnotationPresent(KeyHandler.class))continue;
-            if(method.getParameters().length != 1 || !method.getParameters()[0].getType().equals(boolean.class))
-                throw new IllegalArgumentException(method.getName() + " does not have exactly one parameter of type boolean");
-            String name = method.getAnnotation(KeyHandler.class).value();
-            boolean contains = false;
-            for (String value : defaultKeys.values()) {
-                if(value.equals(name)){
-                    contains = true;
-                    break;
+            if(method.getParameters().length == 1 && method.getParameters()[0].getType().equals(boolean.class)) {
+                String name = method.getAnnotation(KeyHandler.class).value();
+                boolean contains = false;
+                for (String value : defaultKeys.values()) {
+                    if (value.equals(name)) {
+                        contains = true;
+                        break;
+                    }
                 }
+                if (!contains) throw new RuntimeException("The key " + name + " has not been registered");
+                if (!listeners.containsKey(name)) listeners.put(name, new HashMap<>());
+                listeners.get(name).put(method, listener);
+            }else if(method.getParameters().length == 0){
+                String name = method.getAnnotation(KeyHandler.class).value();
+                boolean contains = false;
+                for (String value : defaultKeys.values()) {
+                    if (value.equals(name)) {
+                        contains = true;
+                        break;
+                    }
+                }
+                if (!contains) throw new RuntimeException("The key " + name + " has not been registered");
+                if (!continousListeners.containsKey(name)) continousListeners.put(name, new HashMap<>());
+                continousListeners.get(name).put(method, listener);
             }
-            if(!contains)throw new RuntimeException("The key " + name + " has not been registered");
-            if(!listeners.containsKey(name)) listeners.put(name , new HashMap<>());
-            listeners.get(name).put(method,listener);
+            throw new IllegalArgumentException(method.getName() + " does not have exactly one parameter of type boolean");
         }
     }
     
@@ -121,27 +137,38 @@ public class HIDInput {
         listeners = new HashMap<>();
         mouseMove = new ArrayList<>();
         dragListeners = new HashMap<>();
+        continousListeners = new HashMap<>();
         registerKeys();
         registerListeners();
         keyConfig = new KeyConfig(defaultKeys);
         keyboard = new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (keys[key] == (action != GLFW_RELEASE)) return;
-                if (keys[key]){
-                    if(!listeners.containsKey(keyConfig.get(key)))return;
-                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                //if (keys[key] == (action != GLFW_RELEASE)) return;
+                if(keys[key] && action == GLFW_PRESS){
+                    if(!continousListeners.containsKey(keyConfig.get(key)))return;
+                    continousListeners.get(keyConfig.get(key)).keySet().forEach(method -> {
                         try {
-                            method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
+                            method.invoke(continousListeners.get(keyConfig.get(key)).get(method));
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
                     });
-                }else {
+                }
+                if (!keys[key] && action == GLFW_PRESS){
                     if(!listeners.containsKey(keyConfig.get(key)))return;
                     listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
                         try {
                             method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }else if(keys[key] && action == GLFW_RELEASE) {
+                    if(!listeners.containsKey(keyConfig.get(key)))return;
+                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                        try {
+                            method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }

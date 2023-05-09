@@ -3,7 +3,6 @@ package de.survivalworkers.core.client.engine;
 import de.survivalworkers.core.client.engine.vk.Util;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkInstance;
 
@@ -15,7 +14,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 
-@Slf4j
+
 public class SWWindow implements Closeable {
     private String title;
     @Getter
@@ -43,7 +42,6 @@ public class SWWindow implements Closeable {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         handle = glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
-        log.info(String.valueOf(handle));
         if (handle == MemoryUtil.NULL) {
             throw new RuntimeException("Failed to create window");
         }
