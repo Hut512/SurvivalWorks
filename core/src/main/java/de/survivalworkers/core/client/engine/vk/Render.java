@@ -1,11 +1,11 @@
 package de.survivalworkers.core.client.engine.vk;
 
+import de.survivalworkers.core.client.engine.SWWindow;
 import de.survivalworkers.core.client.engine.vk.rendering.*;
 import de.survivalworkers.core.client.engine.vk.scene.Scene;
 import de.survivalworkers.core.client.engine.vk.vertex.Model;
 import de.survivalworkers.core.client.engine.vk.vertex.ModelData;
 import de.survivalworkers.core.client.engine.vk.vertex.TextureCache;
-import de.survivalworkers.core.client.engine.Window;
 import de.survivalworkers.core.client.engine.vk.pipeline.PipelineCache;
 
 import java.util.ArrayList;
@@ -26,11 +26,11 @@ public class Render {
     private final Scene scene;
     private TextureCache textureCache;
 
-    public Render(Window window,Scene scene){
+    public Render(SWWindow window, Scene scene){
         instance = new Instance(true);
         physicalDevice = PhysicalDevice.create(instance, "NVIDIA GeForce RTX 2070 SUPER");
         device = new Device(physicalDevice);
-        surface = new Surface(physicalDevice,window.window());
+        surface = new Surface(physicalDevice,window.getHandle());
         gQueue = new Queue.GraphicsQueue(device,0);
         pQueue = new Queue.PresentQueue(device,surface,0);
         swapChain = new SwapChain(device,surface,window,3);
@@ -53,11 +53,11 @@ public class Render {
         activity.registerModels(models);
     }
 
-    public void render(Window window){
+    public void render(SWWindow window){
         if (window.getWidth() <= 0 && window.getHeight() <= 0) return;
 
         if (window.isResized() || swapChain.acquireNextImage()) {
-            window.resetResized();
+            window.setResized(false);
             resize(window);
             scene.getProjection().resize(window.getWidth(), window.getHeight());
             swapChain.acquireNextImage();
@@ -85,7 +85,7 @@ public class Render {
         return scene;
     }
 
-    private void resize(Window window) {
+    private void resize(SWWindow window) {
         device.waitIdle();
         gQueue.waitIdle();
 

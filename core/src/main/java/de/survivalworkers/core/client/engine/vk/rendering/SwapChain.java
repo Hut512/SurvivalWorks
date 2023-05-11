@@ -1,6 +1,6 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.client.engine.Window;
+import de.survivalworkers.core.client.engine.SWWindow;
 import de.survivalworkers.core.client.engine.vk.Util;
 
 import org.lwjgl.system.MemoryStack;
@@ -24,7 +24,7 @@ public class SwapChain {
     private int currentFrame;
     private int numImages;
 
-    public SwapChain(Device device, Surface surface, Window window, int requestedImages) {
+    public SwapChain(Device device, Surface surface, SWWindow window, int requestedImages) {
         this.device = device;
         try (MemoryStack stack = MemoryStack.stackPush()) {
 
@@ -116,7 +116,7 @@ public class SwapChain {
         return new SurfaceFormat(imageFormat, colorSpace);
     }
 
-    public VkExtent2D calcSwapChainExtent(Window window, VkSurfaceCapabilitiesKHR surfCapabilities) {
+    public VkExtent2D calcSwapChainExtent(SWWindow window, VkSurfaceCapabilitiesKHR surfCapabilities) {
         VkExtent2D result = VkExtent2D.calloc();
         if (surfCapabilities.currentExtent().width() == 0xFFFFFFFF) {
             int width = Math.min(window.getWidth(), surfCapabilities.maxImageExtent().width());

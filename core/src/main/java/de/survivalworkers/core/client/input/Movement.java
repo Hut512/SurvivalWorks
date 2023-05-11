@@ -11,8 +11,8 @@ public class Movement implements KeyListener, MouseMoveListener {
     public void mouseMove(double x, double y) {
         SurvivalWorkers.getInstance().getEngine().getScene().getCamera().addRotation((float) Math.toRadians((y - SurvivalWorkers.getInstance().getEngine().getWindow().getHeight() / 2) * 0.1f),
                 (float) Math.toRadians((x - SurvivalWorkers.getInstance().getEngine().getWindow().getWidth() / 2) * 0.1f));
-        GLFW.glfwSetInputMode(SurvivalWorkers.getInstance().getEngine().getWindow().window(),GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_DISABLED);
-        GLFW.glfwSetCursorPos(SurvivalWorkers.getInstance().getEngine().getWindow().window(), SurvivalWorkers.getInstance().getEngine().getWindow().getWidth() / 2, SurvivalWorkers.getInstance().getEngine().getWindow().getHeight() / 2);
+        GLFW.glfwSetInputMode(SurvivalWorkers.getInstance().getEngine().getWindow().getHandle(),GLFW.GLFW_CURSOR,GLFW.GLFW_CURSOR_DISABLED);
+        GLFW.glfwSetCursorPos(SurvivalWorkers.getInstance().getEngine().getWindow().getHandle(), SurvivalWorkers.getInstance().getEngine().getWindow().getWidth() / 2, SurvivalWorkers.getInstance().getEngine().getWindow().getHeight() / 2);
     }
 
     @KeyHandler("forward")

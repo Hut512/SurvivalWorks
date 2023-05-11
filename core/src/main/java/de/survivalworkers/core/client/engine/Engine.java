@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 public class Engine {
     private boolean running;
     @Getter
-    private Window window;
+    private SWWindow window;
     private Render render;
     @Getter
     private final Scene scene;
@@ -20,13 +20,13 @@ public class Engine {
 
     public Engine(HIDInput input, Test test) {
         this.input = input;
-        window = new Window();
+        window = new SWWindow();
         scene = new Scene(window);
         render = new Render(window, scene);
         test.inti(scene,render);
-        GLFW.glfwSetKeyCallback(window.window(), input.getKeyboard());
-        GLFW.glfwSetMouseButtonCallback(window.window(), input.getMouseKeys());
-        GLFW.glfwSetCursorPosCallback(window.window(), input.getMousePos());
+        GLFW.glfwSetKeyCallback(window.getHandle(), input.getKeyboard());
+        GLFW.glfwSetMouseButtonCallback(window.getHandle(), input.getMouseKeys());
+        GLFW.glfwSetCursorPosCallback(window.getHandle(), input.getMousePos());
     }
 
     public void start(){
@@ -68,6 +68,6 @@ public class Engine {
     }
 
     public void close() {
-        window.delete();
+        window.close();
     }
 }

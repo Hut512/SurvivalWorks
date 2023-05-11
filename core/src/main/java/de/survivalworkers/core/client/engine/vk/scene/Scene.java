@@ -1,6 +1,6 @@
 package de.survivalworkers.core.client.engine.vk.scene;
 
-import de.survivalworkers.core.client.engine.Window;
+import de.survivalworkers.core.client.engine.SWWindow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ public class Scene {
     private Map<String , List<Entity>> entitiesMap;
     private Projection projection;
 
-    public Scene(Window window){
+    public Scene(SWWindow window){
         entitiesMap = new HashMap<>();
         projection = new Projection();
         projection.resize(window.getWidth(), window.getHeight());

@@ -5,7 +5,6 @@ import de.survivalworkers.core.client.engine.vk.scene.Entity;
 import de.survivalworkers.core.client.engine.vk.scene.Scene;
 import de.survivalworkers.core.client.engine.vk.vertex.ModelData;
 import de.survivalworkers.core.client.engine.vk.vertex.ModelLoader;
-import de.survivalworkers.core.client.engine.Window;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
