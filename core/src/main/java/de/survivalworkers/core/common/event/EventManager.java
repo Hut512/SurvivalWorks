@@ -2,10 +2,10 @@ package de.survivalworkers.core.common.event;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import de.survivalworks.api.common.event.Event;
-import de.survivalworks.api.common.event.EventHandler;
-import de.survivalworks.api.common.event.EventListener;
-import de.survivalworks.api.common.event.EventPriority;
+import de.survivalworkers.api.common.event.Event;
+import de.survivalworkers.api.common.event.EventHandler;
+import de.survivalworkers.api.common.event.EventListener;
+import de.survivalworkers.api.common.event.EventPriority;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;

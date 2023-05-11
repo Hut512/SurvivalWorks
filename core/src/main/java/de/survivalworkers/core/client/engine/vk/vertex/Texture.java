@@ -1,7 +1,6 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
 import de.survivalworkers.core.client.engine.vk.rendering.*;
-import de.survivalworks.core.client.engine.vk.rendering.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;

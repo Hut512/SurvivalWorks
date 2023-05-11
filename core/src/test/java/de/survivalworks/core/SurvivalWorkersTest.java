@@ -2,7 +2,8 @@ package de.survivalworks.core;
 
 import de.survivalworkers.core.SurvivalWorkers;
 import org.junit.Test;
-import static org.junit.if (.*;
+
+import static org.junit.Assert.assertNotNull;
 
 public class SurvivalWorkersTest {
     @Test public void survivalWorkersExists() {

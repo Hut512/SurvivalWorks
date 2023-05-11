@@ -1,4 +1,4 @@
-package de.survivalworkers.core.api.common.event;
+package de.survivalworkers.api.common.event;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

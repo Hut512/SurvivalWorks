@@ -5,7 +5,6 @@ import de.survivalworkers.core.client.engine.vk.scene.Scene;
 import de.survivalworkers.core.client.engine.vk.vertex.Model;
 import de.survivalworkers.core.client.engine.vk.vertex.ModelData;
 import de.survivalworkers.core.client.engine.vk.vertex.TextureCache;
-import de.survivalworks.core.client.engine.vk.rendering.*;
 import de.survivalworkers.core.client.engine.Window;
 import de.survivalworkers.core.client.engine.vk.pipeline.PipelineCache;
 

@@ -1,27 +1,32 @@
 package de.survivalworkers.core.client.engine;
 
-import de.survivalworkers.core.SurvivalWorkers;
+import de.survivalworkers.core.Test;
 import de.survivalworkers.core.client.engine.io.keys.HIDInput;
 import de.survivalworkers.core.client.engine.vk.Render;
 import de.survivalworkers.core.client.engine.vk.scene.Scene;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFW;
 
 @Slf4j
 public class Engine {
     private boolean running;
-    private SWWindow window;
+    @Getter
+    private Window window;
     private Render render;
+    @Getter
     private final Scene scene;
+    private final HIDInput input;
 
-    public Engine(HIDInput input, SurvivalWorkers workers) {
-        window = new SWWindow();
+    public Engine(HIDInput input, Test test) {
+        this.input = input;
+        window = new Window();
         scene = new Scene(window);
         render = new Render(window, scene);
-        workers.init(scene,render);
-        GLFW.glfwSetKeyCallback(window.getHandle(), input.getKeyboard());
-        GLFW.glfwSetMouseButtonCallback(window.getHandle(), input.getMouseKeys());
-        GLFW.glfwSetCursorPosCallback(window.getHandle(), input.getMousePos());
+        test.inti(scene,render);
+        GLFW.glfwSetKeyCallback(window.window(), input.getKeyboard());
+        GLFW.glfwSetMouseButtonCallback(window.window(), input.getMouseKeys());
+        GLFW.glfwSetCursorPosCallback(window.window(), input.getMousePos());
     }
 
     public void start(){
@@ -52,6 +57,7 @@ public class Engine {
                 long diffTime = time - updateTime;
                 updateTime = time;
                 --delta;
+                input.invokeContinuous();
                 /*test.test();*/
             }
             render.render(window);
@@ -62,6 +68,6 @@ public class Engine {
     }
 
     public void close() {
-        window.close();
+        window.delete();
     }
 }

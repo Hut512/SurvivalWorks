@@ -16,7 +16,7 @@ public class Test {
     private float angle = 180.0f;
     private Vector3f rotatingAngle = new Vector3f(1, 1, 1);
     private Scene scene;
-    public void inti(Window window, Scene scene, Render render){
+    public void inti(Scene scene, Render render){
         this.scene = scene;
         List<ModelData> dataList = new ArrayList<>();
         String id = "CubeModel";

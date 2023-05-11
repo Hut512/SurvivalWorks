@@ -1,6 +1,7 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
 import de.survivalworkers.core.client.engine.vk.Util;
+import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -9,6 +10,7 @@ import org.lwjgl.vulkan.VkBufferCreateInfo;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 public class Buffer {
@@ -34,7 +36,7 @@ public class Buffer {
             VK13.vkGetBufferMemoryRequirements(device.getDevice(),buffer,memoryRequirements);
 
             VkMemoryAllocateInfo allocateInfo = VkMemoryAllocateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO).allocationSize(memoryRequirements.size()).
-                    memoryTypeIndex(Util.memoryType(device.getPhysicalDevice(),memoryRequirements.memoryTypeBits(),reqMask));
+                    memoryTypeIndex(device.getPhysicalDevice().memoryType(memoryRequirements.memoryTypeBits(),reqMask));
             Util.check(VK13.vkAllocateMemory(device.getDevice(),allocateInfo,null,lp),"Could not allocate Memory");
             allocationSize = allocateInfo.allocationSize();
             memory = lp.get(0);
@@ -72,5 +74,16 @@ public class Buffer {
             VK13.vkUnmapMemory(device.getDevice(),memory);
             mappedMemory = MemoryUtil.NULL;
         }
+    }
+
+    public void copyMatrixToBuffer(Matrix4f projectionMatrix) {
+        copyMatrixToBuffer(projectionMatrix,0);
+    }
+
+    private void copyMatrixToBuffer(Matrix4f projectionMatrix, int i) {
+        long mappedMem = this.map();
+        ByteBuffer bp = MemoryUtil.memByteBuffer(mappedMem, (int) this.getRequestedSize());
+        projectionMatrix.get(i,bp);
+        this.unMap();
     }
 }

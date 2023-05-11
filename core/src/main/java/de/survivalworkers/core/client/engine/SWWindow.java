@@ -60,7 +60,7 @@ public class SWWindow implements Closeable {
             imgbuffer.put(0,glfwImage);
             glfwSetWindowIcon(handle, imgbuffer);
         }catch (IOException e) {
-            Main.LOGGER.log(e);
+            SurvivalWorkers.LOGGER.log(e);
         }*/
         glfwSetWindowSizeLimits(handle, width, height, width, height);
         glfwSetFramebufferSizeCallback(handle, ((handle1, width1, height1) -> resize(width1,height1)));

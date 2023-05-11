@@ -1,8 +1,8 @@
 package de.survivalworkers.core.common.event;
 
-import de.survivalworks.api.common.event.Event;
-import de.survivalworks.api.common.event.EventListener;
-import de.survivalworks.api.common.event.EventPriority;
+import de.survivalworkers.api.common.event.Event;
+import de.survivalworkers.api.common.event.EventListener;
+import de.survivalworkers.api.common.event.EventPriority;
 import lombok.Getter;
 
 import java.lang.reflect.InvocationTargetException;

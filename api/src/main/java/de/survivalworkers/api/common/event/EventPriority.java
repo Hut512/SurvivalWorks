@@ -1,4 +1,4 @@
-package de.survivalworkers.core.api.common.event;
+package de.survivalworkers.api.common.event;
 
 import lombok.Getter;
 

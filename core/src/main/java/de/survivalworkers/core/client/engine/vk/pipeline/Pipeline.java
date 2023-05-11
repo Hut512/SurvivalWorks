@@ -5,6 +5,7 @@ import de.survivalworkers.core.client.engine.vk.rendering.DescriptorSetLayout;
 import de.survivalworkers.core.client.engine.vk.rendering.Device;
 import de.survivalworkers.core.client.engine.vk.shaders.ShaderProgram;
 import de.survivalworkers.core.client.engine.vk.vertex.VertexInputInfo;
+import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -93,6 +94,14 @@ public class Pipeline {
 
     public long getPipelineLayout() {
         return pipelineLayout;
+    }
+
+    public void setMAtrixAsPushConstant(VkCommandBuffer cmdHandle, Matrix4f modelMatrix) {
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            ByteBuffer pb = stack.malloc(64);
+            modelMatrix.get(0,pb);
+            VK13.vkCmdPushConstants(cmdHandle,this.getPipelineLayout(), VK13.VK_SHADER_STAGE_VERTEX_BIT,0,pb);
+        }
     }
 
     public record PipeLineCreateInfo(long renderPass, ShaderProgram shaderProgram, int colorAttachments, boolean hasDepth, int constantSize, VertexInputInfo inputStateInfo, DescriptorSetLayout[] descriptorLayouts, boolean useBlend){

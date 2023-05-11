@@ -1,4 +1,4 @@
-package de.survivalworkers.core.api;
+package de.survivalworkers.api;
 
 public class Library {
     public boolean someLibraryMethod() {

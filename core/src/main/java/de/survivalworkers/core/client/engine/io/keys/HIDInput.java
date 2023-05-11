@@ -1,5 +1,6 @@
 package de.survivalworkers.core.client.engine.io.keys;
 
+import de.survivalworkers.core.client.input.Movement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
@@ -74,8 +75,7 @@ public class HIDInput {
                 if (!contains) throw new RuntimeException("The key " + name + " has not been registered");
                 if (!continousListeners.containsKey(name)) continousListeners.put(name, new HashMap<>());
                 continousListeners.get(name).put(method, listener);
-            }
-            throw new IllegalArgumentException(method.getName() + " does not have exactly one parameter of type boolean");
+            }else throw new IllegalArgumentException(method.getName() + " does not have exactly one parameter of type boolean");
         }
     }
     
@@ -223,16 +223,37 @@ public class HIDInput {
         };
     }
 
+    public void invokeContinuous(){
+        for (String s : continousListeners.keySet()) {
+            int key = keyConfig.get(s);
+            if(!keys[key])continue;
+            continousListeners.get(s).forEach(((method, keyListener) -> {
+                try {
+                    method.invoke(keyListener);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        }
+    }
+
     /**
      * called when the {@link HIDInput} is created<br> should be used to register a key for usage by a {@link KeyListener}
      */
     private void registerKeys() {
+        registerKey(GLFW_KEY_W,"forward");
+        registerKey(GLFW_KEY_A,"left");
+        registerKey(GLFW_KEY_S,"back");
+        registerKey(GLFW_KEY_D,"right");
+        registerKey(GLFW_KEY_R,"reset");
     }
 
     /**
      * called when the {@link HIDInput} is created<br> should be used to {@link #registerKeyListener(KeyListener)} all Key Listeners
      */
     private void registerListeners() {
+        registerMoveListener(new Movement());
+        registerKeyListener(new Movement());
     }
 
     public void close() {

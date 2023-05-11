@@ -8,7 +8,6 @@ import de.survivalworkers.core.client.engine.vk.shaders.ShaderProgram;
 import de.survivalworkers.core.client.engine.vk.vertex.Model;
 import de.survivalworkers.core.client.engine.vk.vertex.Texture;
 import de.survivalworkers.core.client.engine.vk.vertex.VertexBufferStruct;
-import de.survivalworks.core.client.engine.vk.rendering.*;
 import de.survivalworkers.core.client.engine.vk.pipeline.Pipeline;
 import de.survivalworkers.core.client.engine.vk.pipeline.PipelineCache;
 import org.lwjgl.system.MemoryStack;
@@ -86,7 +85,7 @@ public class ForwardRenderActivity {
             fences[i] = new Fence(device, true);
         }
 
-        Util.copyMatrixToBuffer(projMatrixUniform, scene.getProjection().getProjectionMatrix());
+        projMatrixUniform.copyMatrixToBuffer(scene.getProjection().getProjectionMatrix());
     }
 
     private int calcMaterialsUniformSize() {
@@ -202,8 +201,7 @@ public class ForwardRenderActivity {
             vkCmdSetScissor(cmdHandle, 0, scissor);
 
             LongBuffer descriptorSets = stack.mallocLong(4).put(0, projMatrixDescriptorSet.getDescriptorSet()).put(1, viewMatricesDescriptorSets[idx].getDescriptorSet()).put(3, materialsDescriptorSet.getDescriptorSet());
-            Util.copyMatrixToBuffer(viewMatricesBuffer[idx], scene.getCamera().getViewMatrix());
-
+            viewMatricesBuffer[idx].copyMatrixToBuffer(scene.getCamera().getViewMatrix());
             recordEntities(stack, cmdHandle, descriptorSets, vulkanModelList);
 
             vkCmdEndRenderPass(cmdHandle);
@@ -245,7 +243,7 @@ public class ForwardRenderActivity {
                         vkCmdBindDescriptorSets(cmdHandle, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 pipeLine.getPipelineLayout(), 0, descriptorSets, dynDescrSetOffset);
 
-                        Util.setMAtrixAsPushConstant(pipeLine, cmdHandle, entity.getModelMatrix());
+                        pipeLine.setMAtrixAsPushConstant(cmdHandle, entity.getModelMatrix());
                         vkCmdDrawIndexed(cmdHandle, mesh.numIndices(), 1, 0, 0, 0);
                     }
                 }
@@ -268,7 +266,8 @@ public class ForwardRenderActivity {
     }
 
     public void resize(SwapChain swapChain) {
-        Util.copyMatrixToBuffer(projMatrixUniform, scene.getProjection().getProjectionMatrix());
+        projMatrixUniform.copyMatrixToBuffer( scene.getProjection().getProjectionMatrix());
+
         this.swapChain = swapChain;
         Arrays.stream(frameBuffers).forEach(FrameBuffer::delete);
         Arrays.stream(depthAttachments).forEach(Attachment::delete);

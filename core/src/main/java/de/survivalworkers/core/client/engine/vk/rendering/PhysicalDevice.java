@@ -10,6 +10,9 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.lwjgl.vulkan.VK10.VK_MAX_MEMORY_TYPES;
+import static org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceMemoryProperties;
+
 public class PhysicalDevice {
     private final VkPhysicalDevice physicalDevice;
     private final VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -38,7 +41,7 @@ public class PhysicalDevice {
             VK13.vkGetPhysicalDeviceFeatures(physicalDevice,physicalDeviceFeatures);
 
             memoryProperties = VkPhysicalDeviceMemoryProperties.calloc();
-            VK13.vkGetPhysicalDeviceMemoryProperties(physicalDevice,memoryProperties);
+            vkGetPhysicalDeviceMemoryProperties(physicalDevice,memoryProperties);
         }
     }
 
@@ -119,6 +122,25 @@ public class PhysicalDevice {
         }
 
         return res;
+    }
+
+    public int memoryType(int typeBits, int reqsMask) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            VkPhysicalDeviceMemoryProperties pProperties = VkPhysicalDeviceMemoryProperties.malloc(stack);
+            vkGetPhysicalDeviceMemoryProperties(physicalDevice, pProperties);
+            int res = -1;
+            VkMemoryType.Buffer memoryTypes = pProperties.memoryTypes();
+            for (int i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+                if ((typeBits & 1) == 1 && (memoryTypes.get(i).propertyFlags() & reqsMask) == reqsMask) {
+                    res = i;
+                    break;
+                }
+                typeBits >>= 1;
+            }
+            if (res < 0) throw new RuntimeException("Could not get memoryType");
+
+            return res;
+        }
     }
 
     public VkQueueFamilyProperties.Buffer getQueueFamilyProps() {

@@ -33,7 +33,7 @@ public class Image {
             VK13.vkGetImageMemoryRequirements(device.getDevice(),image,memReq);
 
             VkMemoryAllocateInfo memAlloc = VkMemoryAllocateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO).allocationSize(memReq.size()).
-                    memoryTypeIndex(Util.memoryType(device.getPhysicalDevice(),memReq.memoryTypeBits(),0));
+                    memoryTypeIndex(device.getPhysicalDevice().memoryType(memReq.memoryTypeBits(),0));
 
             Util.check(VK13.vkAllocateMemory(device.getDevice(),memAlloc,null,lp),"Could not Allocate Memory");
             memory = lp.get(0);

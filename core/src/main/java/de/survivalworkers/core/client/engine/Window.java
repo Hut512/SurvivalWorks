@@ -11,8 +11,8 @@ public class Window {
     private long window;
     private boolean resized;
 
-    public Window(String title) {
-        this.title = title;
+    public Window() {
+        this.title = "Survival Workers";
 
         if (!GLFW.glfwInit()) throw new RuntimeException("Could not init GLFW");
         if (!GLFWVulkan.glfwVulkanSupported()) throw new IllegalStateException("No Vulcan supporting device found");
@@ -45,7 +45,7 @@ public class Window {
             imgbuffer.put(0,glfwImage);
             GLFW.glfwSetWindowIcon(window, imgbuffer);
         }catch (IOException e) {
-            Main.LOGGER.log(e);
+            SurvivalWorkers.LOGGER.log(e);
         }*/
         GLFW.glfwSetWindowPos(window,0,0);
         GLFW.glfwSetWindowSizeLimits(window,width,height,width,height);

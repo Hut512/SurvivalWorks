@@ -1,6 +1,5 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
-import de.survivalworkers.core.Main;
 import de.survivalworkers.core.client.engine.vk.Util;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,7 @@ public class Instance {
     VkInstance instance;
     public Instance(boolean validate){
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            ByteBuffer name = stack.UTF8(Main.NAME);
+            ByteBuffer name = stack.UTF8("Test");
             VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO).pApplicationName(name).applicationVersion(1).pEngineName(name).engineVersion(0).
                     apiVersion(VK13.VK_API_VERSION_1_3);
 
