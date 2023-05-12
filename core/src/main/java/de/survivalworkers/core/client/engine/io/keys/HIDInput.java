@@ -3,6 +3,7 @@ package de.survivalworkers.core.client.engine.io.keys;
 import de.survivalworkers.core.client.input.Movement;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -145,7 +146,30 @@ public class HIDInput {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
                 //if (keys[key] == (action != GLFW_RELEASE)) return;
-                if(keys[key] && action == GLFW_PRESS){
+
+                if (!keys[key] && action == GLFW_PRESS){
+                    if(listeners.containsKey(keyConfig.get(key))) {
+                        listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                            try {
+                                method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
+                }else if(keys[key] && action == GLFW_RELEASE) {
+                    if(listeners.containsKey(keyConfig.get(key))) {
+                        listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                            try {
+                                method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
+                }
+                keys[key] = (action != GLFW_RELEASE);
+                /*if(){
                     if(!continousListeners.containsKey(keyConfig.get(key)))return;
                     continousListeners.get(keyConfig.get(key)).keySet().forEach(method -> {
                         try {
@@ -154,27 +178,7 @@ public class HIDInput {
                             throw new RuntimeException(e);
                         }
                     });
-                }
-                if (!keys[key] && action == GLFW_PRESS){
-                    if(!listeners.containsKey(keyConfig.get(key)))return;
-                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
-                        try {
-                            method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }else if(keys[key] && action == GLFW_RELEASE) {
-                    if(!listeners.containsKey(keyConfig.get(key)))return;
-                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
-                        try {
-                            method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-                keys[key] = (action != GLFW_RELEASE);
+                }*/
             }
         };
 
@@ -224,6 +228,8 @@ public class HIDInput {
     }
 
     public void invokeContinuous(){
+
+
         for (String s : continousListeners.keySet()) {
             int key = keyConfig.get(s);
             if(!keys[key])continue;
