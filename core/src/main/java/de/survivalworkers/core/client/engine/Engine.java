@@ -15,9 +15,9 @@ public class Engine {
     private Renderer render;
     private final Scene scene;
 
-    public Engine() {
+    public Engine(HIDInput input) {
         window = new SWWindow();
-        input = new HIDInput();
+        this.input = input;
         scene = new Scene(window);
         render = new Renderer(window, scene);
         GLFW.glfwSetKeyCallback(window.getHandle(), input.getKeyboard());
