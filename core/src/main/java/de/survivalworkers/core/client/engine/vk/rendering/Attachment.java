@@ -1,10 +1,15 @@
 package de.survivalworkers.core.client.engine.vk.rendering;
 
+import lombok.Getter;
 import org.lwjgl.vulkan.VK13;
 
 public class Attachment {
+
+    @Getter
     private final Image image;
+    @Getter
     private final ImageView imageView;
+    @Getter
     private boolean depthAttachment;
 
     public Attachment(Device device,int width,int height,int format,int usage){
@@ -23,20 +28,8 @@ public class Attachment {
         imageView = new ImageView(device,image.getImage(),viewData);
     }
 
-    public void delete(){
-        imageView.delete();
-        image.delete();
-    }
-
-    public Image getImage() {
-        return image;
-    }
-
-    public ImageView getImageView() {
-        return imageView;
-    }
-
-    public boolean isDepthAttachment() {
-        return depthAttachment;
+    public void close() {
+        imageView.close();
+        image.close();
     }
 }

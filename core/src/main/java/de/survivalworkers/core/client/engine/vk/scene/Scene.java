@@ -1,6 +1,9 @@
 package de.survivalworkers.core.client.engine.vk.scene;
 
 import de.survivalworkers.core.client.engine.SWWindow;
+import lombok.Getter;
+import lombok.Setter;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,12 +14,18 @@ public class Scene {
     private Camera camera;
     private Map<String , List<Entity>> entitiesMap;
     private Projection projection;
+    @Getter
+    @Setter
+    private Light[] lights;
+    @Getter
+    private Vector4f ambientLight;
 
     public Scene(SWWindow window){
         entitiesMap = new HashMap<>();
         projection = new Projection();
         projection.resize(window.getWidth(), window.getHeight());
         camera = new Camera();
+        ambientLight = new Vector4f();
     }
 
     public void addEntity(Entity entity) {

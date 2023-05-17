@@ -3,18 +3,26 @@ package de.survivalworkers.core.client.engine;
 import de.survivalworkers.core.client.engine.vk.Util;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkInstance;
 
-import java.awt.*;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.Closeable;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 
-
+@Slf4j
 public class SWWindow implements Closeable {
     private String title;
     @Getter
@@ -27,12 +35,19 @@ public class SWWindow implements Closeable {
 
     public SWWindow(int width, int height) {
         title = "SurvivalWorks";
-        this.width = width;
-        this.height = height;
+
 
         if (!glfwInit()) {
             throw new RuntimeException("Could not init GLFW");
         }
+
+        if(width == 1 || height == 1){
+            width = glfwGetVideoMode(glfwGetPrimaryMonitor()).width();
+            height = glfwGetVideoMode(glfwGetPrimaryMonitor()).height();
+        }
+        this.width = width;
+        this.height = height;
+
 
         if (!glfwVulkanSupported()) {
             throw new RuntimeException("No Vulcan supporting device found");
@@ -43,14 +58,16 @@ public class SWWindow implements Closeable {
 
         handle = glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
         if (handle == MemoryUtil.NULL) {
-            throw new RuntimeException("Failed to create window");
+            throw new RuntimeException("Could not create window");
         }
+
+
 
         glfwMaximizeWindow(handle);
         glfwRequestWindowAttention(handle);
-        /*For Icon (Icon does not work)
-        try {
-            BufferedImage image = ImageIO.read(Objects.requireNonNull(Window.class.getResourceAsStream("/Icon.png")));
+        //For Icon (Icon does not work)
+        /*try {
+            BufferedImage image = ImageIO.read(new FileInputStream("core/src/main/resources/Icon.png"));
             byte[] iconData = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
             ByteBuffer buffer = BufferUtils.createByteBuffer(iconData.length);
             buffer.put(iconData);
@@ -60,21 +77,20 @@ public class SWWindow implements Closeable {
             imgbuffer.put(0,glfwImage);
             glfwSetWindowIcon(handle, imgbuffer);
         }catch (IOException e) {
-            SurvivalWorkers.LOGGER.log(e);
+            log.error(e.getMessage());
         }*/
         glfwSetWindowSizeLimits(handle, width, height, width, height);
         glfwSetFramebufferSizeCallback(handle, ((handle1, width1, height1) -> resize(width1,height1)));
     }
 
     public SWWindow() {
-        this((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth(),
-                (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight());
+        this(1,1);
 
         glfwSetWindowPos(handle,0,0);
     }
     
     public void createSurface(VkInstance instance, LongBuffer pSurface) {
-        Util.check(glfwCreateWindowSurface(instance, handle, null, pSurface), "Failed to create surface");
+        Util.check(glfwCreateWindowSurface(instance, handle, null, pSurface), "Could not create surface");
     }
 
     public void pollEvents(){

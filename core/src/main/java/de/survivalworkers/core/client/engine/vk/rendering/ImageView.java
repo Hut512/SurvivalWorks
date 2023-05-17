@@ -1,36 +1,35 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
+import de.survivalworkers.core.client.engine.vk.Util;
+import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 
 import java.nio.LongBuffer;
 
-import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK11.*;
 
 public class ImageView {
+
+    @Getter
     private final Device device;
+    @Getter
     private final long imgView;
 
     public ImageView(Device device,long img,ImageViewData data) {
         this.device = device;
         try (MemoryStack stack = MemoryStack.stackPush()) {
             LongBuffer lp = stack.mallocLong(1);
-            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO).image(img).viewType(data.viewType).format(data.format).
+            VkImageViewCreateInfo createInfo = VkImageViewCreateInfo.calloc(stack).sType$Default().image(img).viewType(data.viewType).format(data.format).
                     subresourceRange(it -> it.aspectMask(data.aspectMask).baseMipLevel(0).levelCount(data.mipLevels).baseArrayLayer(data.baseArrayLayer).layerCount(data.layerCount));
-            vkCreateImageView(device.getDevice(), createInfo, null, lp);
+
+            Util.check(vkCreateImageView(device.getDevice(), createInfo, null, lp),"Could not create image view");
             imgView = lp.get(0);
         }
     }
 
-
-    public void delete() {
+    public void close() {
         vkDestroyImageView(device.getDevice(), imgView, null);
-    }
-
-
-    public long getImgView() {
-        return imgView;
     }
 
     public static class ImageViewData {
@@ -45,7 +44,7 @@ public class ImageView {
             this.baseArrayLayer = 0;
             this.layerCount = 1;
             this.mipLevels = 1;
-            this.viewType = VK13.VK_IMAGE_VIEW_TYPE_2D;
+            this.viewType = VK_IMAGE_VIEW_TYPE_2D;
         }
 
         public ImageView.ImageViewData aspectMask(int aspectMask) {

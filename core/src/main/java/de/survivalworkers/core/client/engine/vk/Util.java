@@ -26,6 +26,10 @@ import static org.lwjgl.vulkan.VK13.VK_PIPELINE_COMPILE_REQUIRED;
 @UtilityClass
 public class Util {
 
+    /** This method checks weather a return code is an error and if true throws an Exception
+     * @param returnCode the code that is checked
+     * @param errorMessage the String that will be prefixed to the
+     */
     public void check(int returnCode, String errorMessage) {
         if (returnCode != VK_SUCCESS) {
             throw new RuntimeException(errorMessage + ": " + translateVulkanResult(returnCode));
@@ -122,5 +126,9 @@ public class Util {
             arr[i] = list.get(i);
         }
         return arr;
+    }
+
+    public int convert(boolean b){
+        return b ? 1:0;
     }
 }

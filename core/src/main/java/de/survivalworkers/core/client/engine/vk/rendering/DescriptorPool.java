@@ -1,16 +1,19 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
 import de.survivalworkers.core.client.engine.vk.Util;
+import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
-import org.lwjgl.vulkan.VkDescriptorPoolCreateInfo;
-import org.lwjgl.vulkan.VkDescriptorPoolSize;
-
+import org.lwjgl.vulkan.*;
 import java.nio.LongBuffer;
 import java.util.List;
 
+import static org.lwjgl.vulkan.VK11.*;
+
 public class DescriptorPool {
+
+    @Getter
     private final Device device;
+    @Getter
     private final long descriptorPool;
     public DescriptorPool(Device device, List<DescriptorTypeCount> descriptors){
         this.device = device;
@@ -19,10 +22,10 @@ public class DescriptorPool {
             VkDescriptorPoolSize.Buffer typeCounts = VkDescriptorPoolSize.calloc(descriptors.size(),stack);
             for (int i = 0; i < descriptors.size(); i++) {
                 maxSets += descriptors.get(i).count();
-                typeCounts.get(i).type(descriptors.get(i).type).descriptorCount(descriptors.get(i).count());
+                typeCounts.get(i).type(descriptors.get(i).type()).descriptorCount(descriptors.get(i).count());
             }
 
-            VkDescriptorPoolCreateInfo createInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO).flags(VK13.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT).pPoolSizes(typeCounts).
+            VkDescriptorPoolCreateInfo createInfo = VkDescriptorPoolCreateInfo.calloc(stack).sType$Default().flags(VK13.VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT).pPoolSizes(typeCounts).
                     maxSets(maxSets);
 
             LongBuffer lp = stack.mallocLong(1);
@@ -33,7 +36,7 @@ public class DescriptorPool {
 
     public record DescriptorTypeCount(int count,int type){}
 
-    public void freeDescriptors(long descriptorSet){
+    public void freeDescriptorSet(long descriptorSet){
         try(MemoryStack stack = MemoryStack.stackPush()) {
             LongBuffer lp = stack.mallocLong(1);
             lp.put(0,descriptorSet);
@@ -42,15 +45,8 @@ public class DescriptorPool {
         }
     }
 
-    public void delete(){
+    public void close(){
         VK13.vkDestroyDescriptorPool(device.getDevice(),descriptorPool,null);
     }
 
-    public Device getDevice() {
-        return device;
-    }
-
-    public long getDescriptorPool() {
-        return descriptorPool;
-    }
 }

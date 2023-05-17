@@ -1,42 +1,39 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
 import de.survivalworkers.core.client.engine.vk.Util;
-
+import lombok.Getter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
+import java.nio.*;
+
+import static org.lwjgl.vulkan.VK11.*;
 
 public class Queue {
-    private final VkQueue vkQueue;
+    @Getter
+    private final VkQueue queue;
 
     public Queue(Device device,int queueFamI,int queueI){
         try(MemoryStack stack = MemoryStack.stackPush()) {
             PointerBuffer pQueue = stack.mallocPointer(1);
-            VK13.vkGetDeviceQueue(device.getDevice(),queueFamI,queueI,pQueue);
+            vkGetDeviceQueue(device.getDevice(),queueFamI,queueI,pQueue);
             long queue = pQueue.get(0);
-            vkQueue = new VkQueue(queue,device.getDevice());
+            this.queue = new VkQueue(queue,device.getDevice());
         }
     }
-
-    public VkQueue getQueue() {
-        return vkQueue;
-    }
-
     public void submit(PointerBuffer pointers, LongBuffer longs, IntBuffer ints, LongBuffer longs1, Fence fences) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO).pCommandBuffers(pointers).pSignalSemaphores(longs1);
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack).sType$Default().pCommandBuffers(pointers).pSignalSemaphores(longs1);
             if(longs != null)submitInfo.waitSemaphoreCount(longs.capacity()).pWaitSemaphores(longs).pWaitDstStageMask(ints);
             else submitInfo.waitSemaphoreCount(0);
-            long fence = fences != null ? fences.getFence() : VK13.VK_NULL_HANDLE;
-            Util.check(VK13.vkQueueSubmit(vkQueue,submitInfo,fence),"Could not Submit Queue");
+            long fence = fences != null ? fences.getFence() : VK_NULL_HANDLE;
+            Util.check(vkQueueSubmit(queue,submitInfo,fence),"Could not Submit Queue");
         }
     }
 
-    public void waitIdle(){
-        VK13.vkQueueWaitIdle(vkQueue);
+    public void waitIdle() {
+        vkQueueWaitIdle(queue);
     }
 
     public static class GraphicsQueue extends Queue{
@@ -57,7 +54,7 @@ public class Queue {
                 }
             }
 
-            if(i < 0)throw new RuntimeException("Failed getting Graphics Queue I");
+            if(i < 0)throw new RuntimeException("Could not get graphics Queue I");
             return i;
         }
     }
@@ -75,7 +72,7 @@ public class Queue {
                 IntBuffer ip = stack.mallocInt(1);
                 for (int j = 0;  j < queueBuf.capacity(); j++) {
                     KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice.getPhysicalDevice(),j,surface.getSurface(),ip);
-                    if(ip.get(0) == VK13.VK_TRUE) {
+                    if(ip.get(0) == VK_TRUE) {
                         i = j;
                         break;
                     }

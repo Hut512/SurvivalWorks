@@ -18,7 +18,6 @@ public class Projection {
 
     public void resize(int width, int height) {
         projectionMatrix.identity();
-        projectionMatrix.setPerspective(1.0471976f, (float) width / (float) height,
-                1.0f, 500.0f,true);
+        projectionMatrix.setPerspective(1.0471976f, (float) width / (float) height, 1.0f, 500.0f,true);
     }
 }

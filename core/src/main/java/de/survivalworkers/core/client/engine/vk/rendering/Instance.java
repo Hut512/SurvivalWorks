@@ -1,27 +1,30 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
 import de.survivalworkers.core.client.engine.vk.Util;
-
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.*;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.*;
+import java.util.*;
+
+import static org.lwjgl.vulkan.EXTDebugUtils.*;
+import static org.lwjgl.vulkan.VK11.*;
+import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
 @Slf4j
 public class Instance {
-    VkInstance instance;
+
+    @Getter
+    private final VkInstance instance;
     public Instance(boolean validate){
         try(MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer name = stack.UTF8("Test");
-            VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO).pApplicationName(name).applicationVersion(1).pEngineName(name).engineVersion(0).
-                    apiVersion(VK13.VK_API_VERSION_1_3);
+            VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack).sType$Default().pApplicationName(name).applicationVersion(1).pEngineName(name).engineVersion(0).
+                    apiVersion(VK_API_VERSION_1_3);
 
             List<String> validationLayers = getSupportedValidationLayers();
             boolean supportsValidation = validate;
@@ -52,10 +55,10 @@ public class Instance {
 
             long extension = MemoryUtil.NULL;
             if(supportsValidation)extension = createDebug().address();
-            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO).pNext(extension).pApplicationInfo(appInfo).ppEnabledLayerNames(requiredLayers).
+            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.calloc(stack).sType$Default().pNext(extension).pApplicationInfo(appInfo).ppEnabledLayerNames(requiredLayers).
                     ppEnabledExtensionNames(requiredExtensions);
             PointerBuffer pInstance = stack.mallocPointer(1);
-            Util.check(VK13.vkCreateInstance(instanceCreateInfo,null,pInstance),"Err in instance init");
+            Util.check(vkCreateInstance(instanceCreateInfo,null,pInstance),"Err in instance init");
             instance = new VkInstance(pInstance.get(0),instanceCreateInfo);
         }
     }
@@ -63,10 +66,10 @@ public class Instance {
     private List<String> getSupportedValidationLayers() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer numLayersArr = stack.callocInt(1);
-            VK13.vkEnumerateInstanceLayerProperties(numLayersArr, null);
+            vkEnumerateInstanceLayerProperties(numLayersArr, null);
             int numLayers = numLayersArr.get(0);
             VkLayerProperties.Buffer propsBuf = VkLayerProperties.calloc(numLayers, stack);
-            VK13.vkEnumerateInstanceLayerProperties(numLayersArr, propsBuf);
+            vkEnumerateInstanceLayerProperties(numLayersArr, propsBuf);
             List<String> supportedLayers = new ArrayList<>();
             for (int i = 0; i < numLayers; i++) {
                 VkLayerProperties props = propsBuf.get(i);
@@ -92,21 +95,14 @@ public class Instance {
             requestedLayers.add("VK_LAYER_LUNARG_core_validation");
             requestedLayers.add("VK_LAYER_GOOGLE_unique_objects");
 
-            List<String> overlap = requestedLayers.stream().filter(supportedLayers::contains).toList();
-
-            return overlap;
+            return requestedLayers.stream().filter(supportedLayers::contains).toList();
         }
     }
-
-    public void delete(){
-        VK13.vkDestroyInstance(instance,null);
-    }
-
-    public VkInstance getInstance() {
-        return instance;
+    public void close(){
+        vkDestroyInstance(instance,null);
     }
     private static VkDebugUtilsMessengerCreateInfoEXT createDebug(){
-        return VkDebugUtilsMessengerCreateInfoEXT.calloc().sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT).messageType(EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT).
+        return VkDebugUtilsMessengerCreateInfoEXT.calloc().sType$Default().messageType(EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT).
                 messageType(EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT).
                 pfnUserCallback((messageSeverity, messageTypes, pCallbackData, pUserData) ->{
                     log.debug(VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData).pMessageString());

@@ -145,8 +145,6 @@ public class HIDInput {
         keyboard = new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
-                //if (keys[key] == (action != GLFW_RELEASE)) return;
-
                 if (!keys[key] && action == GLFW_PRESS){
                     if(listeners.containsKey(keyConfig.get(key))) {
                         listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
@@ -169,16 +167,6 @@ public class HIDInput {
                     }
                 }
                 keys[key] = (action != GLFW_RELEASE);
-                /*if(){
-                    if(!continousListeners.containsKey(keyConfig.get(key)))return;
-                    continousListeners.get(keyConfig.get(key)).keySet().forEach(method -> {
-                        try {
-                            method.invoke(continousListeners.get(keyConfig.get(key)).get(method));
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }*/
             }
         };
 
@@ -202,25 +190,26 @@ public class HIDInput {
         mouseKeys = new GLFWMouseButtonCallback() {
             @Override
             public void invoke(long window, int key, int action, int mods) {
-                if (keys[key] == (action != GLFW_RELEASE)) return;
                 if (keys[key]){
-                    if(!listeners.containsKey(keyConfig.get(key)))return;
-                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
-                        try {
-                            method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if(listeners.containsKey(keyConfig.get(key))) {
+                        listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                            try {
+                                method.invoke(listeners.get(keyConfig.get(key)).get(method), false);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 }else {
-                    if(!listeners.containsKey(keyConfig.get(key)))return;
-                    listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
-                        try {
-                            method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if(listeners.containsKey(keyConfig.get(key))) {
+                        listeners.get(keyConfig.get(key)).keySet().forEach(method -> {
+                            try {
+                                method.invoke(listeners.get(keyConfig.get(key)).get(method), true);
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
                 }
                 keys[key] = (action != GLFW_RELEASE);
             }

@@ -1,5 +1,6 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
+import lombok.Getter;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
@@ -7,7 +8,9 @@ import org.lwjgl.vulkan.KHRSurface;
 import java.nio.LongBuffer;
 
 public class Surface {
+
     private final PhysicalDevice physicalDevice;
+    @Getter
     private final long surface;
 
     public Surface(PhysicalDevice physicalDevice,long window){
@@ -19,11 +22,7 @@ public class Surface {
         }
     }
 
-    public void delete(){
+    public void close(){
         KHRSurface.vkDestroySurfaceKHR(physicalDevice.getPhysicalDevice().getInstance(),surface,null);
-    }
-
-    public long getSurface() {
-        return surface;
     }
 }

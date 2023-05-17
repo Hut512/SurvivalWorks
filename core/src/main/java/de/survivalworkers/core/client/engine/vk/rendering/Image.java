@@ -1,19 +1,25 @@
-package de.survivalworkers.core.client.engine.vk.rendering;
+package  de.survivalworkers.core.client.engine.vk.rendering;
 
 import de.survivalworkers.core.client.engine.vk.Util;
+import lombok.Getter;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
-import org.lwjgl.vulkan.VkImageCreateInfo;
-import org.lwjgl.vulkan.VkMemoryAllocateInfo;
-import org.lwjgl.vulkan.VkMemoryRequirements;
+import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 
+import static org.lwjgl.vulkan.VK11.*;
+
 public class Image {
+
+    @Getter
     private final Device device;
+    @Getter
     private final int format;
+    @Getter
     private final int mipLvl;
+    @Getter
     private final long image;
+    @Getter
     private final long memory;
 
     public Image(Device device,ImageData data){
@@ -22,44 +28,27 @@ public class Image {
             this.format = data.format;
             this.mipLvl = data.mipLvl;
 
-            VkImageCreateInfo createInfo = VkImageCreateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO).imageType(VK13.VK_IMAGE_TYPE_2D).format(format).extent(it -> it.width(data.width).height(data.height).depth(1)).
-                    mipLevels(mipLvl).arrayLayers(data.arrayLayers).samples(data.sampleCount).initialLayout(VK13.VK_IMAGE_LAYOUT_UNDEFINED).sharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE).tiling(VK13.VK_IMAGE_TILING_OPTIMAL).usage(data.usage);
+            VkImageCreateInfo createInfo = VkImageCreateInfo.calloc(stack).sType$Default().imageType(VK_IMAGE_TYPE_2D).format(format).extent(it -> it.width(data.width).height(data.height).depth(1)).
+                    mipLevels(mipLvl).arrayLayers(data.arrayLayers).samples(data.sampleCount).initialLayout(VK_IMAGE_LAYOUT_UNDEFINED).sharingMode(VK_SHARING_MODE_EXCLUSIVE).tiling(VK_IMAGE_TILING_OPTIMAL).usage(data.usage);
 
             LongBuffer lp = stack.mallocLong(1);
             Util.check(VK13.vkCreateImage(device.getDevice(),createInfo,null,lp),"Could not create Image");
             image = lp.get(0);
 
             VkMemoryRequirements memReq = VkMemoryRequirements.calloc(stack);
-            VK13.vkGetImageMemoryRequirements(device.getDevice(),image,memReq);
+            vkGetImageMemoryRequirements(device.getDevice(),image, memReq);
 
-            VkMemoryAllocateInfo memAlloc = VkMemoryAllocateInfo.calloc(stack).sType(VK13.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO).allocationSize(memReq.size()).
-                    memoryTypeIndex(device.getPhysicalDevice().memoryType(memReq.memoryTypeBits(),0));
+            VkMemoryAllocateInfo memAlloc = VkMemoryAllocateInfo.calloc(stack).sType$Default().allocationSize(memReq.size()).memoryTypeIndex(device.getPhysicalDevice().memoryType(memReq.memoryTypeBits(),0));
 
-            Util.check(VK13.vkAllocateMemory(device.getDevice(),memAlloc,null,lp),"Could not Allocate Memory");
+            Util.check(vkAllocateMemory(device.getDevice(),memAlloc,null,lp),"Could not Allocate Memory");
             memory = lp.get(0);
-            Util.check(VK13.vkBindImageMemory(device.getDevice(),image,memory,0),"Could not bind memory");
+            Util.check(vkBindImageMemory(device.getDevice(),image,memory,0),"Could not bind image memory");
         }
     }
 
-    public void delete(){
-        VK13.vkDestroyImage(device.getDevice(),image,null);
-        VK13.vkFreeMemory(device.getDevice(),memory,null);
-    }
-
-    public int getFormat() {
-        return format;
-    }
-
-    public int getMipLevel() {
-        return mipLvl;
-    }
-
-    public long getImage() {
-        return image;
-    }
-
-    public long getMemory() {
-        return memory;
+    public void close() {
+        vkDestroyImage(device.getDevice(),image,null);
+        vkFreeMemory(device.getDevice(),memory,null);
     }
 
     public static class ImageData{
@@ -71,7 +60,7 @@ public class Image {
         private int width;
         private int usage;
         public ImageData(){
-            this.format = VK13.VK_FORMAT_R8G8B8A8_SRGB;
+            this.format = VK_FORMAT_R8G8B8A8_SRGB;
             this.mipLvl = 1;
             this.sampleCount = 1;
             this.arrayLayers = 1;

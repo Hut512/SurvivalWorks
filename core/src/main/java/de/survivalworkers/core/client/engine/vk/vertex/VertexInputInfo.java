@@ -3,12 +3,14 @@ package de.survivalworkers.core.client.engine.vk.vertex;
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 
 public abstract class VertexInputInfo {
-    protected VkPipelineVertexInputStateCreateInfo stateInfo;
-    public void delete(){
-        stateInfo.free();
+
+    protected VkPipelineVertexInputStateCreateInfo inputInfo;
+
+    public void close() {
+        inputInfo.free();
     }
 
-    public VkPipelineVertexInputStateCreateInfo getStateInfo() {
-        return stateInfo;
+    public VkPipelineVertexInputStateCreateInfo getInputInfo() {
+        return inputInfo;
     }
 }

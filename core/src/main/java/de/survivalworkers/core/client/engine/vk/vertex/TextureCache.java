@@ -1,9 +1,8 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
-import de.survivalworkers.core.client.engine.vk.rendering.Device;
+import de.survivalworkers.core.client.engine.vk.rendering.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TextureCache {
     private final Map<String,Texture> textures;
@@ -14,17 +13,17 @@ public class TextureCache {
 
     public Texture createTexture(Device device, String path, int format){
         String texPath = path;
-        if(path == null || path.trim().isEmpty())texPath = "";
+        if(path == null || path.trim().isEmpty())texPath = "core/src/main/resources/models/default.png";
         Texture texture = textures.get(texPath);
         if(texture == null){
             texture = new Texture(device,texPath,format);
-            textures.put(path,texture);
+            textures.put(texPath,texture);
         }
         return texture;
     }
 
-    public void delete(){
-        textures.forEach((k,v) -> v.delete());
+    public void close(){
+        textures.forEach((k,v) -> v.close());
         textures.clear();
     }
 }

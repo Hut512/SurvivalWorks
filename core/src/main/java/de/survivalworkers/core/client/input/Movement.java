@@ -16,27 +16,27 @@ public class Movement implements KeyListener, MouseMoveListener {
     }
 
     @KeyHandler("forward")
-    public void forward(boolean pressed){
-        if(pressed) SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveForward(0.5f);
+    public void forward(){
+         SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveForward(0.5f);
     }
 
     @KeyHandler("left")
-    public void left(boolean pressed){
-        if(pressed) SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveLeft(0.5f);
+    public void left(){
+        SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveLeft(0.5f);
     }
 
     @KeyHandler("back")
-    public void back(boolean pressed){
-        if(pressed) SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveBack(0.5f);
+    public void back(){
+        SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveBack(0.5f);
     }
 
     @KeyHandler("right")
-    public void right(boolean pressed){
-        if(pressed) SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveRight(0.5f);
+    public void right(){
+        SurvivalWorkers.getInstance().getEngine().getScene().getCamera().moveRight(0.5f);
     }
 
     @KeyHandler("reset")
-    public void reset(boolean pressed){
-        if(pressed) SurvivalWorkers.getInstance().getEngine().getScene().getCamera().setPos(0.0f,0.0f,0.0f);
+    public void reset(){
+        SurvivalWorkers.getInstance().getEngine().getScene().getCamera().setPos(0.0f,0.0f,0.0f);
     }
 }

@@ -1,23 +1,26 @@
 package de.survivalworkers.core.client.engine.vk.vertex;
 
-import de.survivalworkers.core.client.engine.vk.rendering.*;
-import de.survivalworkers.core.client.engine.vk.rendering.Queue;
+import de.survivalworkers.core.client.engine.vk.rendering.Buffer;
+import lombok.Getter;
 import org.joml.Vector4f;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.system.*;
 import org.lwjgl.vulkan.VkBufferCopy;
+import  de.survivalworkers.core.client.engine.vk.rendering.Queue;
+import  de.survivalworkers.core.client.engine.vk.rendering.*;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.*;
 
+import static org.lwjgl.vulkan.VK11.*;
+
 public class Model {
-    private final String modelId;
+    @Getter
+    private final String id;
+    @Getter
     private final List<Material> materials;
 
     public Model(String modelId) {
-        this.modelId = modelId;
+        this.id = modelId;
         materials = new ArrayList<>();
     }
 
@@ -26,8 +29,8 @@ public class Model {
         int numIndices = indices.length;
         int bufferSize = numIndices * 4;
 
-        Buffer srcBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        Buffer dstBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK13.VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer srcBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Buffer dstBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         long mappedMemory = srcBuffer.map();
         IntBuffer data = MemoryUtil.memIntBuffer(mappedMemory, (int) srcBuffer.getRequestedSize());
@@ -39,15 +42,18 @@ public class Model {
 
     private static TransferBuffers createVerticesBuffers(Device device, ModelData.MeshData meshData) {
         float[] positions = meshData.pos();
+        float[] normals = meshData.normals();
+        float[] tangents = meshData.tangents();
+        float[] biTangents = meshData.biTangents();
         float[] textCoords = meshData.texCords();
         if (textCoords == null || textCoords.length == 0) {
             textCoords = new float[(positions.length / 3) * 2];
         }
-        int numElements = positions.length + textCoords.length;
+        int numElements = positions.length + normals.length + tangents.length + biTangents.length + textCoords.length;
         int bufferSize = numElements * 4;
 
-        Buffer srcBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        Buffer dstBuffer = new Buffer(device, bufferSize, VK13.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK13.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        Buffer srcBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Buffer dstBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         long mappedMemory = srcBuffer.map();
         FloatBuffer data = MemoryUtil.memFloatBuffer(mappedMemory, (int) srcBuffer.getRequestedSize());
@@ -59,6 +65,15 @@ public class Model {
             data.put(positions[startPos]);
             data.put(positions[startPos + 1]);
             data.put(positions[startPos + 2]);
+            data.put(normals[startPos]);
+            data.put(normals[startPos + 1]);
+            data.put(normals[startPos + 2]);
+            data.put(tangents[startPos]);
+            data.put(tangents[startPos + 1]);
+            data.put(tangents[startPos + 2]);
+            data.put(biTangents[startPos]);
+            data.put(biTangents[startPos + 1]);
+            data.put(biTangents[startPos + 2]);
             data.put(textCoords[startTextCoord]);
             data.put(textCoords[startTextCoord + 1]);
         }
@@ -70,10 +85,8 @@ public class Model {
 
     private static void recordTransferCommand(CommandBuffer cmd, TransferBuffers transferBuffers) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack)
-                    .srcOffset(0).dstOffset(0).size(transferBuffers.srcBuffer().getRequestedSize());
-            VK13.vkCmdCopyBuffer(cmd.getCmdBuf(), transferBuffers.srcBuffer().getBuffer(),
-                    transferBuffers.dstBuffer().getBuffer(), copyRegion);
+            VkBufferCopy.Buffer copyRegion = VkBufferCopy.calloc(1, stack).srcOffset(0).dstOffset(0).size(transferBuffers.srcBuffer().getRequestedSize());
+            vkCmdCopyBuffer(cmd.getCmdBuf(), transferBuffers.srcBuffer().getBuffer(), transferBuffers.dstBuffer().getBuffer(), copyRegion);
         }
     }
 
@@ -123,50 +136,52 @@ public class Model {
             queue.submit(stack.pointers(cmd.getCmdBuf()), null, null, null, fence);
         }
         fence.fenceWait();
-        fence.delete();
-        cmd.delete();
+        fence.close();
+        cmd.close();
 
-        stagingBufferList.forEach(Buffer::delete);
+        stagingBufferList.forEach(Buffer::close);
+        textures.forEach(Texture::closeSTG);
 
         return models;
     }
 
     private static Material transformMaterial(ModelData.Material material,Device device,TextureCache cache,CommandBuffer cmdBuf,List<Texture> textures){
-        Texture tex = cache.createTexture(device,material.texPath(),VK13.VK_FORMAT_R8G8B8A8_SRGB);
+        Texture tex = cache.createTexture(device,material.texPath(), VK_FORMAT_R8G8B8A8_SRGB);
         boolean hasTex = material.texPath() != null && material.texPath().trim().length() > 0;
-        if(hasTex){
-            tex.recordTextureTransition(cmdBuf);
-            textures.add(tex);
-        }
+        Texture normalTex = cache.createTexture(device, material.normalMapPath(), VK_FORMAT_R8G8B8A8_UNORM);
+        boolean hasNormalTex = material.normalMapPath() != null && material.normalMapPath().trim().length() > 0;
+        Texture metalRoughTex = cache.createTexture(device, material.metalRoughMap(), VK_FORMAT_R8G8B8A8_UNORM);
+        boolean hasMetalRoughTex = material.metalRoughMap() != null && material.metalRoughMap().trim().length() > 0;
 
-        return new Material(material.diffuseColor(),tex,hasTex,new ArrayList<>());
+        tex.recordTextureTransition(cmdBuf);
+        textures.add(tex);
+        normalTex.recordTextureTransition(cmdBuf);
+        textures.add(normalTex);
+        metalRoughTex.recordTextureTransition(cmdBuf);
+        textures.add(metalRoughTex);
+
+        return new Material(material.diffuseColor(),tex,hasTex,normalTex,hasNormalTex,metalRoughTex,hasMetalRoughTex,material.metallic(),material.roughness(),new ArrayList<>());
     }
 
-    public void delete() {
-        materials.forEach(material -> material.meshes.forEach(Mesh::delete));
-    }
+    
 
-    public String getModelId() {
-        return modelId;
-    }
-
-    public List<Material> getMaterials() {
-        return materials;
+    public void close() {
+        materials.forEach(m -> m.meshes.forEach((Mesh::close)));
     }
 
     private record TransferBuffers(Buffer srcBuffer, Buffer dstBuffer) {
     }
 
-    public record Material(Vector4f diffuseColor,Texture texture,boolean hasTexture,List<Mesh> meshes){
+    public record Material(Vector4f diffuseColor,Texture texture,boolean hasTexture,Texture normalTex,boolean hasNormalTex,Texture metalRoughTex,boolean hasMetalRoughTex,float metallic,float roughness,List<Mesh> meshes){
         public boolean isTransparent(){
-            return texture.isTransparent();
+            return texture.isHasTransparencies();
         }
     }
 
     public record Mesh(Buffer verticesBuffer, Buffer indicesBuffer, int numIndices) {
-        public void delete() {
-            verticesBuffer.delete();
-            indicesBuffer.delete();
+        public void close() {
+            verticesBuffer.close();
+            indicesBuffer.close();
         }
     }
 }

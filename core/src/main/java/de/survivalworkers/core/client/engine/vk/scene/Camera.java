@@ -81,4 +81,11 @@ public class Camera {
         rotation.set(x,y);
         recalculate();
     }
+
+    public void setPosition(float x,float y,float z){
+        position.x = x;
+        position.y = y;
+        position.z = z;
+        recalculate();
+    }
 }

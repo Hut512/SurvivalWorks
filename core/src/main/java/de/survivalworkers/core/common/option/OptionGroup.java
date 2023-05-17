@@ -36,7 +36,7 @@ public abstract class OptionGroup implements Closeable {
             if (file.exists())
                 load(new BufferedInputStream(new FileInputStream(file)));
         } catch (IOException e) {
-            log.warn("Failed to load options file " + fileName, e);
+            log.warn("Could not load options file " + fileName, e);
         }
     }
 
@@ -56,11 +56,11 @@ public abstract class OptionGroup implements Closeable {
                             String strValue = properties.getProperty(f.getName(), strDefaultValue);
                             f.set(this, typeMappers.get(f.getType()).apply(strValue));
                         } catch (IllegalAccessException | RuntimeException e) {
-                            log.warn("Failed to set Field of option group: " + id, e);
+                            log.warn("Could not set Field of option group: " + id, e);
                         }
                     });
         } catch (IOException e) {
-            log.warn("Failed to load options file: " + id, e);
+            log.warn("Could not load options file: " + id, e);
         }
     }
 
@@ -71,7 +71,7 @@ public abstract class OptionGroup implements Closeable {
                 file.createNewFile();
             store(new BufferedOutputStream(new FileOutputStream(file)));
         } catch (IOException e) {
-            log.warn("Failed to load options file " + fileName, e);
+            log.warn("Could not load options file " + fileName, e);
         }
     }
 
@@ -89,12 +89,12 @@ public abstract class OptionGroup implements Closeable {
                                 properties.setProperty(f.getName(), String.valueOf(value));
                             }
                         } catch (IllegalAccessException e) {
-                            log.warn("Failed to get Field of option group: " + id, e);
+                            log.warn("Could not get Field of option group: " + id, e);
                         }
                     });
             properties.store(outputStream, null);
         } catch (IOException e) {
-            log.warn("Failed to store options file: " + id, e);
+            log.warn("Could not store options file: " + id, e);
         }
     }
 
