@@ -1,10 +1,9 @@
-# survivalworks
+# Survivalworks
   
-## Info
-This is a small game about building and developing a factory as well as fighting of Hostile entities or other players in multiplayer
+### Survivalworks is a small game about the construction and development of a factory, as well as fighting against enemy units or other players in multiplayer mode.
 
-## Developers
-This game is planed to include a Plugin API which will let you make plugins. This feature will however only be available when the first version of the game is finished
+## Downloads
+As soon as the first full version is available, release builds of the game will be made available for public download.
 
-## Play
-It is planed for this game to be publicly available for download once the first version is available
+## Plugin Development
+This game is planned to include a plugin API that will allow you to create plugins. However, this feature will not be available until the first version of the game is finished.
